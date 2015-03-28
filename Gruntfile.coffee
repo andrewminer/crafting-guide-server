@@ -16,14 +16,14 @@ module.exports = (grunt)->
     grunt.config.init
 
         clean:
-            dist: ['./dist']
+            target: ['./target']
 
         coffee:
             files:
                 expand: true
                 cwd:    'src'
                 src:    '**/*.coffee'
-                dest:   './dist'
+                dest:   './target'
                 ext:    '.js'
                 extDot: 'last'
 
