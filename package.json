@@ -4,7 +4,8 @@
   "description": "The server component for the Crafting Guide website (http://crafting-guide.com)",
   "main": "./dist/index.js",
   "scripts": {
-    "test": "grunt test"
+    "test": "grunt test",
+    "postinstall": "grunt build"
   },
   "repository": {
     "type": "git",

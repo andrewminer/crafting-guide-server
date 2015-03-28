@@ -1,1 +1,1 @@
-web: coffee ./src/index.coffee
+web: node ./dist/index.js
