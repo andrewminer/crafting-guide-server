@@ -2,7 +2,7 @@
   "name": "crafting-guide-server",
   "version": "1.0.0",
   "description": "The server component for the Crafting Guide website (http://crafting-guide.com)",
-  "main": "./target/index.js",
+  "main": "./dist/index.js",
   "scripts": {
     "test": "grunt test"
   },
@@ -18,7 +18,7 @@
     "mods"
   ],
   "engines": {
-      "node": "0.10.x"
+      "node": "0.12.x"
   },
   "author": "Andrew Miner",
   "license": "ISC",

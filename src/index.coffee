@@ -17,7 +17,7 @@ _.mixin require('crafting-guide-common').stringMixins
 global.logger = new Logger level:Logger.VERBOSE
 
 port = process.env.CRAFTING_GUIDE_PORT or 80
-env  = process.env.CRAFTING_GUIDE_ENV
+env  = process.env.NODE_ENV
 
 server = new CraftingGuideServer port, env
 
