@@ -35,11 +35,11 @@ module.exports = class CraftingGuideServer
         deferred = w.defer()
         @httpServer.once 'error', (e)-> deferred.reject e
         @httpServer.listen @port, =>
-            logger.warning "Graffer API Server is listening on port #{@port}"
+            logger.warning "Crafting Guide Server is listening on port #{@port}"
             deferred.resolve this
         return deferred.promise
 
     stop: ->
         w.promise (resolve, reject)=>
-            logger.warning "Graffer API Server is shutting down" unless @expressApp.env is 'test'
+            logger.warning "Crafting Guide Server is shutting down" unless @expressApp.env is 'test'
             @httpServer.close -> resolve this
