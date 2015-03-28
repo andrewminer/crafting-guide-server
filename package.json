@@ -17,7 +17,9 @@
     "mod",
     "mods"
   ],
-  "engine": "node >= 0.12.0",
+  "engines": {
+      "node": "0.12.x"
+  },
   "author": "Andrew Miner",
   "license": "ISC",
   "bugs": {
