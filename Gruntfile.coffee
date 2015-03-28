@@ -50,6 +50,8 @@ module.exports = (grunt)->
 
     grunt.registerTask 'develop', ['clean', 'build', 'test', 'watch']
 
+    grunt.registerTask 'heroku:production', ['build']
+
     grunt.registerTask 'test', ['mochaTest']
 
     grunt.registerTask 'use-local-deps', ->
