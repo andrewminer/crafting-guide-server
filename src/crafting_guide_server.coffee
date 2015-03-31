@@ -8,7 +8,6 @@ All rights reserved.
 express    = require 'express'
 http       = require 'http'
 middleware = require './middleware'
-w          = require 'when'
 
 ########################################################################################################################
 
@@ -27,6 +26,7 @@ module.exports = class CraftingGuideServer
 
         middleware.addPrefixes @expressApp
         @expressApp.use '/', require './routers/root'
+        @expressApp.use '/github', require './routers/github'
         middleware.addSuffixes @expressApp
 
         @httpServer = http.createServer @expressApp

@@ -22,5 +22,6 @@ global.expect = chai.expect
 global.logger = new Logger level:Logger.DEBUG
 global.should = chai.should()
 global.util   = require 'util'
+global.w      = require 'when'
 
 _.mixin require('crafting-guide-common').stringMixins

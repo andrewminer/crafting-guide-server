@@ -5,11 +5,10 @@ Copyright (c) 2015 by Redwood Labs
 All rights reserved.
 ###
 
+GitHubClient  = require './models/github_client'
 bodyParser    = require 'body-parser'
 clientSession = require 'client-sessions'
 status        = require './http_status'
-util          = require 'util'
-w             = require 'when'
 {Logger}      = require 'crafting-guide-common'
 
 ########################################################################################################################
@@ -23,12 +22,12 @@ exports.addPrefixes = (app)->
         approveOrigin
         registerFinalizers
         bodyParser.json()
-        logRequest
         clientSession
             cookieName: 'session'
             duration: 1000 * 60 * 60 * 24 * 7 * 2 # 2 weeks in ms
             secret: 'CKpyGnY2C(]@Z38u'
-        ensureSessionId
+        unpackCurrentUser
+        logRequest
         addApiResponseMethod
     ]
 
@@ -36,11 +35,12 @@ exports.addSuffixes = (app)->
     app.use reportError
 
 addApiResponseMethod = (request, response, next)->
-    response.api = ((req, res)-> return (promise)->
-        promise = w(promise)
+    response.api = ((req, res)-> return (value)->
+        if _.isFunction(value) then value = value()
+        promise = w(value)
         result = null
         w(promise)
-            .then (r)-> result = r; logger.debug "result: #{util.inspect(result)}"
+            .then (r)-> result = r
             .timeout 60000, new Error 'Timed out while answering request'
             .then -> writeSuccessResponse result, req, res
             .catch (error)-> writeErrorResponse error, req, res
@@ -60,27 +60,21 @@ approveOrigin = (request, response, next)->
     else
         next()
 
-ensureSessionId = (request, response, next)->
-    request.session.id ?= _.uuid()
-    next()
-
 logRequest = (request, response, next)->
     account = request.session?.account
 
     logger.verbose -> ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
     logger.info    -> "HTTP #{request.httpVersion} #{request.method} #{request.originalUrl}"
+    logger.verbose -> "*** user:    #{request?.user?.name} <#{request?.user?.email}>"
     logger.verbose -> "*** headers: #{_.pp(request.headers)}"
-    logger.verbose -> "*** ips:     #{_.pp(request.ips)}"
     logger.verbose -> "*** params:  #{_.pp(request.params)}"
     logger.verbose -> "----------"
 
-    start = new Date().valueOf()
+    start = Date.now()
     response.finalizers.push (request, response)->
         logger.verbose -> "----------"
-        logger.verbose -> "*** session: #{request.session}"
-
         logger.info ->
-            duration = new Date().valueOf() - start
+            duration = Date.now() - start
             resultLine = "Responded: #{response.statusCode} after #{duration}ms"
             if response.result?
                 length = response.result.length; unit = 'B'
@@ -99,6 +93,12 @@ reportError = (error, request, response, next)->
     logger.error "Caught unexpected error: #{error.message}:\n#{error.stack}"
     writeErrorResponse error, request, response
     runFinalizers request, response
+
+unpackCurrentUser = (request, response, next)->
+    request.user = request.session.user
+    request.gitHubClient = new GitHubClient accessToken:request.session.accessToken
+
+    next()
 
 # Optional Middleware ##################################################################################################
 
@@ -121,7 +121,7 @@ writeErrorResponse = (error, request, response)->
     statusCode = if error.statusCode? then error.statusCode else status.internalServerError
     if statusCode is status.internalServerError
         logger.error "Unexpected internal error: #{error.stack}"
-    result = {requestId:request.id, status:'error', message:error.message}
+    result = {status:'error', message:error.message}
     result.data = error.data if error.data?
     result.stack = error.stack if request.app.env in ['test' or 'development']
 

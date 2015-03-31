@@ -1,5 +1,5 @@
 ###
-Crafting Guide Server - admin.coffee
+Crafting Guide Server - root.coffee
 
 Copyright (c) 2015 by Redwood Labs
 All rights reserved.

@@ -3,23 +3,19 @@
 # All rights reserved.
 ###
 
-global._            = require 'underscore'
+global._ = require 'underscore'
+global.w = require 'when'
 
 CraftingGuideServer = require './crafting_guide_server'
 {Logger}            = require 'crafting-guide-common'
-program             = require 'commander'
-util                = require 'util'
-
-_.mixin require('crafting-guide-common').stringMixins
 
 ########################################################################################################################
 
+_.mixin require('crafting-guide-common').stringMixins
+
 global.logger = new Logger level:Logger.VERBOSE
 
-port = process.env.PORT
-env  = process.env.NODE_ENV
-
-server = new CraftingGuideServer port, env
+server = new CraftingGuideServer process.env.PORT, process.env.NODE_ENV
 
 for signal in ['SIGINT', 'SIGTERM']
     process.on signal, -> server.stop().then -> process.exit 0
