@@ -25,7 +25,7 @@ gitHubServer = null
 describe 'router: /github', ->
 
     before ->
-        gitHubServer = new TestHttpServer port:8002
+        gitHubServer = new TestHttpServer 8002
         w.join gitHubServer.start(), harness.before()
 
     beforeEach -> w.join gitHubServer.clear(), harness.beforeEach()
