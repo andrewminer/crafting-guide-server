@@ -25,18 +25,12 @@ gitHubServer = null
 describe 'router: /github', ->
 
     before ->
-        harness.before()
-
         gitHubServer = new TestHttpServer port:8002
-        gitHubServer.start()
+        w.join gitHubServer.start(), harness.before()
 
-    beforeEach ->
-        harness.beforeEach()
-        gitHubServer.clear()
+    beforeEach -> w.join gitHubServer.clear(), harness.beforeEach()
 
-    after ->
-        harness.after()
-        gitHubServer.stop()
+    after -> w.join gitHubServer.stop()
 
     describe '/complete-login', ->
 

@@ -17,7 +17,6 @@ describe 'router: ', ->
 
     before     -> harness.before()
     beforeEach -> harness.beforeEach()
-    after      -> harness.after()
 
     describe '/ping', ->
 

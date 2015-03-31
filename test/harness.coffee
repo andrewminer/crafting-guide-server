@@ -25,9 +25,6 @@ module.exports = class Harness
         @serverStarting = null
         @server         = null
 
-    after: ->
-        @server.stop()
-
     before: ->
         if not _serverStarting?
             _server = new CraftingGuideServer PORT, 'test'
