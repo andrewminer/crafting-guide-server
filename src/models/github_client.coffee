@@ -25,6 +25,10 @@ module.exports = class GitHubClient
 
         _.extend this, _.pick options, 'accessToken', 'apiBaseUrl', 'baseUrl', 'clientId', 'clientSecret', 'timeout'
 
+        @_headers =
+            'Accept':     'application/json'
+            'User-Agent': 'Crafting Guide Server'
+
         if not @clientId? then throw new Error "A GitHub Client Id. must be provided"
         if not @clientSecret? then throw new Error "A GitHub Client Secret must be provided"
 
@@ -33,19 +37,13 @@ module.exports = class GitHubClient
     completeLogin: (code)->
         if not code? then return w.reject throw new Error 'code is required'
 
-        headers = accept:'application/json'
-        body    = client_id:@clientId, client_secret:@clientSecret, code:code
-
-        http.post "#{@baseUrl}/login/oauth/access_token", headers:headers, body:body
+        body = client_id:@clientId, client_secret:@clientSecret, code:code
+        http.post "#{@baseUrl}/login/oauth/access_token", headers:@_headers, body:body
             .timeout @timeout
             .then (response)=>
-                if response.statusCode isnt 200
-                    throw new Error "GitHub request failed: #{response.statusCode} #{response.body}"
-
-                data = JSON.parse response.body
+                data = @_parseResponse response
                 if not data.access_token?
                     throw new Error "GitHub request failed: No access code included in body: #{response.body}"
-
                 @accessToken = data.access_token
                 return this
             .catch (error)->
@@ -55,11 +53,31 @@ module.exports = class GitHubClient
     # GitHub User Calls ############################################################################
 
     fetchCurrentUser: ->
-        if not @accessToken? then throw new Error "user must be logged in first"
-
-        headers = authorization: "token #{@accessToken}"
-        http.get "#{@apiBaseUrl}/user", headers:headers
+        @_requireAuthorization()
+        http.get "#{@apiBaseUrl}/user", headers:@_headers
             .then (response)=>
-                data = JSON.parse response.body
-                user = _.pick data, 'id', 'login', 'avatar_url', 'name', 'email'
+                data = @_parseResponse response
+                user = _.pick data, 'avatar_url', 'email', 'login', 'name'
                 return user
+
+    # Private Methods ##############################################################################
+
+    _parseResponse: (response)->
+        logger.verbose "GitHub response: #{_.pp(response)}"
+        try
+            data = JSON.parse response.body
+        catch error
+            HttpStatus.badGateway.throw "Could not parse GitHub's response (#{error.message}): #{response.body}"
+
+        if response.statusCode is 401
+            HttpStatus.unauthorized.throw "GitHub credentials were not accepted: #{data.message}"
+        else if 300 <= response.statusCode < 500
+            HttpStatus.internalServerError.throw "Unexpected problem communicating with GitHub: #{data.message}"
+        else if response.statusCode >= 500
+            HttpStatus.badGateway.throw "GitHub encountered a problem with the request: #{data.message}"
+
+        return data
+
+    _requireAuthorization: ->
+        if not @accessToken? then throw new Error "user must be logged in first"
+        @_headers['Authorization'] = "token #{@accessToken}"

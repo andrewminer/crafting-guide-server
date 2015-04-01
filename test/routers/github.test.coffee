@@ -35,7 +35,7 @@ describe 'router: /github', ->
     describe '/complete-login', ->
 
         it 'returns a user object when successful', ->
-            userData = id:1, login:'log', avatar_url:'ava', name:'nam', email:'ema'
+            userData = login:'log', avatar_url:'ava', name:'nam', email:'ema'
 
             gitHubServer.pushResponse statusCode:200, body:JSON.stringify access_token:'tok'
             gitHubServer.pushResponse statusCode:200, body:JSON.stringify userData
@@ -63,7 +63,8 @@ describe 'router: /github', ->
             harness.client.completeGitHubLogin code:'cod'
                 .catch (error)->
                     error.response.statusCode.should.equal 502
-                    error.response.json.message.should.equal 'GitHub request failed: 500 internal server error'
+                    error.response.json.message.should.equal "Could not parse GitHub's response " +
+                         "(Unexpected token i): internal server error"
 
         it 'returns an error if no access token was returned', ->
             gitHubServer.pushResponse statusCode:200, body:JSON.stringify message:'nothing to see here'
@@ -73,3 +74,42 @@ describe 'router: /github', ->
                     error.response.statusCode.should.equal 502
                     error.response.json.message.should.equal 'GitHub request failed: No access code included in ' +
                         'body: {"message":"nothing to see here"}'
+
+    describe '/logout', ->
+
+        it 'causes subsequent calls to request a login', ->
+            userData = login:'log', avatar_url:'ava', name:'nam', email:'ema'
+            gitHubServer.pushResponse statusCode:200, body:JSON.stringify access_token:'tok'
+            gitHubServer.pushResponse statusCode:200, body:JSON.stringify userData
+            gitHubServer.pushResponse statusCode:200, body:JSON.stringify userData
+            loginRequested = false
+
+            harness.client.completeGitHubLogin code:'cod'
+                .then (response)->
+                    response.json.data.user.should.eql userData
+                    harness.client.fetchCurrentUser()
+                .then (response)->
+                    response.json.data.user.should.eql userData
+                    harness.client.logout()
+                .then ->
+                    harness.client.fetchCurrentUser()
+                .catch (error)->
+                    error.response.statusCode.should.equal 401
+                    error.response.json.message.should.equal 'you must be logged in to use this API'
+
+
+    describe '/user', ->
+
+        it 'returns a full user record when logged in', ->
+            userData = login:'log', avatar_url:'ava', name:'nam', email:'ema'
+            gitHubServer.pushResponse statusCode:200, body:JSON.stringify access_token:'tok'
+            gitHubServer.pushResponse statusCode:200, body:JSON.stringify userData
+            gitHubServer.pushResponse statusCode:200, body:JSON.stringify userData
+
+            harness.client.completeGitHubLogin code:'cod'
+                .then (response)->
+                    response.json.data.user.should.eql userData
+
+                    harness.client.fetchCurrentUser()
+                        .then (response)->
+                            response.json.data.user.should.eql userData

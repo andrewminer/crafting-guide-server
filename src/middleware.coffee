@@ -5,11 +5,12 @@ Copyright (c) 2015 by Redwood Labs
 All rights reserved.
 ###
 
-GitHubClient  = require './models/github_client'
-bodyParser    = require 'body-parser'
-clientSession = require 'client-sessions'
-status        = require './http_status'
-{Logger}      = require 'crafting-guide-common'
+GitHubClient          = require './models/github_client'
+bodyParser            = require 'body-parser'
+clientSession         = require 'client-sessions'
+status                = require './http_status'
+{CraftingGuideClient} = require 'crafting-guide-common'
+{Logger}              = require 'crafting-guide-common'
 
 ########################################################################################################################
 
@@ -23,7 +24,7 @@ exports.addPrefixes = (app)->
         registerFinalizers
         bodyParser.json()
         clientSession
-            cookieName: 'session'
+            cookieName: CraftingGuideClient.SESSION_COOKIE
             duration: 1000 * 60 * 60 * 24 * 7 * 2 # 2 weeks in ms
             secret: 'CKpyGnY2C(]@Z38u'
         unpackCurrentUser
@@ -73,6 +74,7 @@ logRequest = (request, response, next)->
     start = Date.now()
     response.finalizers.push (request, response)->
         logger.verbose -> "----------"
+        logger.verbose -> "*** session: #{_.pp(request.session)}"
         logger.info ->
             duration = Date.now() - start
             resultLine = "Responded: #{response.statusCode} after #{duration}ms"
@@ -95,15 +97,15 @@ reportError = (error, request, response, next)->
     runFinalizers request, response
 
 unpackCurrentUser = (request, response, next)->
-    request.user = request.session.user
-    request.gitHubClient = new GitHubClient accessToken:request.session.accessToken
+    request.user = request.session?.user
+    request.gitHubClient = new GitHubClient accessToken:request.session?.accessToken
 
     next()
 
 # Optional Middleware ##################################################################################################
 
 exports.requireLogin = (request, response, next)->
-    if not request.session?.owner_id?
+    if not request.session?.accessToken?
         status.unauthorized.throw 'you must be logged in to use this API'
     next()
 
@@ -121,6 +123,10 @@ writeErrorResponse = (error, request, response)->
     statusCode = if error.statusCode? then error.statusCode else status.internalServerError
     if statusCode is status.internalServerError
         logger.error "Unexpected internal error: #{error.stack}"
+    if statusCode is status.unauthorized
+        request.session.accessToken = null
+        request.session.user = null
+
     result = {status:'error', message:error.message}
     result.data = error.data if error.data?
     result.stack = error.stack if request.app.env in ['test' or 'development']

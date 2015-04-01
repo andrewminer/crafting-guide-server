@@ -3,8 +3,9 @@
 # All rights reserved.
 ###
 
-global._ = require 'underscore'
-global.w = require 'when'
+global._    = require 'underscore'
+global.util = require 'util'
+global.w    = require 'when'
 
 CraftingGuideServer = require './crafting_guide_server'
 {Logger}            = require 'crafting-guide-common'
