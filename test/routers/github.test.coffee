@@ -64,7 +64,7 @@ describe 'router: /github', ->
                 .catch (error)->
                     error.response.statusCode.should.equal 502
                     error.response.json.message.should.equal "Could not parse GitHub's response " +
-                         "(Unexpected token i): internal server error"
+                         "(SyntaxError: Unexpected token i): internal server error"
 
         it 'returns an error if no access token was returned', ->
             gitHubServer.pushResponse statusCode:200, body:JSON.stringify message:'nothing to see here'
