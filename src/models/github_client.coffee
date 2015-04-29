@@ -29,8 +29,26 @@ module.exports = class GitHubClient
             'Accept':     'application/json'
             'User-Agent': 'Crafting Guide Server'
 
-        if not @clientId? then throw new Error "A GitHub Client Id. must be provided"
+        if not @clientId? then throw new Error "A GitHub Client ID must be provided"
         if not @clientSecret? then throw new Error "A GitHub Client Secret must be provided"
+
+    # GitHub File Calls ############################################################################
+
+    fetchFile: (owner, repo, path)->
+        @_requireAuthorization()
+
+        http.get "#{@apiBaseUrl}/repos/#{owner}/#{repo}/contents/#{path}", headers:@_headers
+            .timeout @timeout
+            .then (response)=>
+                data = @_parseResponse response
+                content = new Buffer data.content, 'base64'
+                return content.toString 'utf8'
+            .catch (error)->
+                if error.statusCode is HttpStatus.notFound
+                    return null
+                else
+                    HttpStatus.badGateway.throw message, {}, error
+            .catch w.TimeoutError, -> HttpStatus.gatewayTimeout.throw 'GitHub failed to response'
 
     # GitHub Login Calls ###########################################################################
 
@@ -63,11 +81,15 @@ module.exports = class GitHubClient
     # Private Methods ##############################################################################
 
     _parseResponse: (response)->
-        logger.verbose "GitHub response: #{_.pp(response)}"
+        logger.verbose "GitHub response: #{_.ellipsize(_.pp(response), 1024)}"
+
+        if response.statusCode is 404
+            HttpStatus.notFound.throw "GitHub could not find the requested resource"
+
         try
             data = JSON.parse response.body
         catch error
-            HttpStatus.badGateway.throw "Could not parse GitHub's response (#{error.message}): #{response.body}"
+            HttpStatus.badGateway.throw "Could not parse GitHub's response (#{error}): #{_.ellipsize(response.body)}"
 
         if response.statusCode is 401
             HttpStatus.unauthorized.throw "GitHub credentials were not accepted: #{data.message}"

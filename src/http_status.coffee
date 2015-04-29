@@ -55,7 +55,8 @@ module.exports =
 for name, code of module.exports
     module.exports[name] = code = new Number code
     code.throw = ((c)-> return (message=null, data={}, error=e)->
-        e = new Error message or name
+        message ?= name
+        e = new Error message
         e.statusCode = c
         e.data = data
         e.originalError = error
