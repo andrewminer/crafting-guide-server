@@ -124,8 +124,9 @@ writeErrorResponse = (error, request, response)->
     if statusCode is status.internalServerError
         logger.error "Unexpected internal error: #{error.stack}"
     if statusCode is status.unauthorized
-        request.session.accessToken = null
-        request.session.user = null
+        if request.session?
+            request.session.accessToken = null
+            request.session.user = null
 
     result = {status:'error', message:error.message}
     result.data = error.data if error.data?
