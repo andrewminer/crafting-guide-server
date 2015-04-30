@@ -1,0 +1,5 @@
+deployment:
+  staging:
+    branch: production
+    heroku:
+      appname: crafting-guide-production
