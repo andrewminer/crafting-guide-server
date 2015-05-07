@@ -41,14 +41,16 @@ module.exports = class GitHubClient
             .timeout @timeout
             .then (response)=>
                 data = @_parseResponse response
-                content = new Buffer data.content, 'base64'
-                return content.toString 'utf8'
+                return result =
+                    content: new Buffer(data.content, 'base64').toString('utf8')
+                    sha: data.sha
             .catch (error)->
                 if error.statusCode is HttpStatus.notFound
                     return null
                 else
                     HttpStatus.badGateway.throw message, {}, error
-            .catch w.TimeoutError, -> HttpStatus.gatewayTimeout.throw 'GitHub failed to response'
+            .catch w.TimeoutError, ->
+                HttpStatus.gatewayTimeout.throw 'GitHub failed to respond'
 
     # GitHub Login Calls ###########################################################################
 

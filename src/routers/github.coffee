@@ -7,6 +7,7 @@ All rights reserved.
 
 GitHubClient   = require '../models/github_client'
 express        = require 'express'
+{Repo}         = require '../constants'
 {http}         = require 'crafting-guide-common'
 {requireLogin} = require '../middleware'
 
@@ -33,9 +34,21 @@ router.delete '/logout', (request, response)->
         request.session.accessToken = null
         request.session.user = null
 
+# Private Routes ###################################################################################
+
 router.get '/user', requireLogin, (request, response)->
     response.api ->
         request.gitHubClient.fetchCurrentUser()
             .then (user)->
                 request.session.user = user
                 return data:user:user
+
+router.get '/file/*', requireLogin, (request, response)->
+    owner = Repo.craftingGuideData.owner
+    path  = request.params[0]
+    repo  = Repo.craftingGuideData.name
+
+    response.api ->
+        request.gitHubClient.fetchFile owner, repo, path
+            .then (fileRecord)->
+                return data:fileRecord

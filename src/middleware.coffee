@@ -33,6 +33,8 @@ exports.addPrefixes = (app)->
     ]
 
 exports.addSuffixes = (app)->
+    app.get '*', (request, response)->
+        request.api -> status.notFound.throw "cannot find: #{request.path}"
     app.use reportError
 
 addApiResponseMethod = (request, response, next)->
