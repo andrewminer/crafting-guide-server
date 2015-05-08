@@ -48,7 +48,7 @@ module.exports = class GitHubClient
                 if error instanceof w.TimeoutError
                     HttpStatus.gatewayTimeout.throw 'GitHub failed to respond'
                 else
-                    HttpStatus.badGateway.throw 'GitHub encountered a problem', {}, error
+                    HttpStatus.badGateway.throw error.message, {}, error
 
     updateFile: (owner, repo, path, message, content, sha)->
         @_requireAuthorization()
@@ -58,12 +58,13 @@ module.exports = class GitHubClient
         http.put "#{@apiBaseUrl}/repos/#{owner}/#{repo}/contents/#{path}", headers:@_headers, body:body
             .timeout @timeout
             .then (response)=>
+                @_parseResponse response
                 return null
             .catch (error)=>
                 if error instanceof w.TimeoutError
                     HttpStatus.gatewayTimeout.throw 'GitHub failed to respond'
                 else
-                    HttpStatus.badGateway.throw 'GitHub encountered a problem', {}, error
+                    HttpStatus.badGateway.throw error.message, {}, error
 
     # GitHub Login Calls ###########################################################################
 
@@ -78,12 +79,12 @@ module.exports = class GitHubClient
                 if not data.access_token?
                     throw new Error "GitHub request failed: No access code included in body: #{response.body}"
                 @accessToken = data.access_token
-                return this
+                return null
             .catch (error)=>
                 if error instanceof w.TimeoutError
                     HttpStatus.gatewayTimeout.throw 'GitHub failed to respond'
                 else
-                    HttpStatus.badGateway.throw 'GitHub encountered a problem', {}, error
+                    HttpStatus.badGateway.throw error.message, {}, error
 
     # GitHub User Calls ############################################################################
 
@@ -99,7 +100,7 @@ module.exports = class GitHubClient
                 if error instanceof w.TimeoutError
                     HttpStatus.gatewayTimeout.throw 'GitHub failed to respond'
                 else
-                    HttpStatus.badGateway.throw 'GitHub encountered a problem', {}, error
+                    HttpStatus.badGateway.throw error.message, {}, error
 
     # Private Methods ##############################################################################
 
