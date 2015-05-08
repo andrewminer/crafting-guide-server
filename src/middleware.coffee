@@ -34,7 +34,7 @@ exports.addPrefixes = (app)->
 
 exports.addSuffixes = (app)->
     app.get '*', (request, response)->
-        request.api -> status.notFound.throw "cannot find: #{request.path}"
+        request.api -> status.notFound.throw "unknown request: #{request.path}"
     app.use reportError
 
 addApiResponseMethod = (request, response, next)->

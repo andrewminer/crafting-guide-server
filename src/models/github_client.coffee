@@ -44,13 +44,26 @@ module.exports = class GitHubClient
                 return result =
                     content: new Buffer(data.content, 'base64').toString('utf8')
                     sha: data.sha
-            .catch (error)->
-                if error.statusCode is HttpStatus.notFound
-                    return null
+            .catch (error)=>
+                if error instanceof w.TimeoutError
+                    HttpStatus.gatewayTimeout.throw 'GitHub failed to respond'
                 else
-                    HttpStatus.badGateway.throw message, {}, error
-            .catch w.TimeoutError, ->
-                HttpStatus.gatewayTimeout.throw 'GitHub failed to respond'
+                    HttpStatus.badGateway.throw 'GitHub encountered a problem', {}, error
+
+    updateFile: (owner, repo, path, message, content, sha)->
+        @_requireAuthorization()
+
+        content = new Buffer(content, 'utf8').toString('base64')
+        body = message:message, content:content, sha:sha
+        http.put "#{@apiBaseUrl}/repos/#{owner}/#{repo}/contents/#{path}", headers:@_headers, body:body
+            .timeout @timeout
+            .then (response)=>
+                return null
+            .catch (error)=>
+                if error instanceof w.TimeoutError
+                    HttpStatus.gatewayTimeout.throw 'GitHub failed to respond'
+                else
+                    HttpStatus.badGateway.throw 'GitHub encountered a problem', {}, error
 
     # GitHub Login Calls ###########################################################################
 
@@ -66,19 +79,27 @@ module.exports = class GitHubClient
                     throw new Error "GitHub request failed: No access code included in body: #{response.body}"
                 @accessToken = data.access_token
                 return this
-            .catch (error)->
-                HttpStatus.badGateway.throw error.message, {}, error
-            .catch w.TimeoutError, -> HttpStatus.gatewayTimeout.throw 'GitHub failed to respond'
+            .catch (error)=>
+                if error instanceof w.TimeoutError
+                    HttpStatus.gatewayTimeout.throw 'GitHub failed to respond'
+                else
+                    HttpStatus.badGateway.throw 'GitHub encountered a problem', {}, error
 
     # GitHub User Calls ############################################################################
 
     fetchCurrentUser: ->
         @_requireAuthorization()
         http.get "#{@apiBaseUrl}/user", headers:@_headers
+            .timeout @timeout
             .then (response)=>
                 data = @_parseResponse response
                 user = _.pick data, 'avatar_url', 'email', 'login', 'name'
                 return user
+            .catch (error)=>
+                if error instanceof w.TimeoutError
+                    HttpStatus.gatewayTimeout.throw 'GitHub failed to respond'
+                else
+                    HttpStatus.badGateway.throw 'GitHub encountered a problem', {}, error
 
     # Private Methods ##############################################################################
 

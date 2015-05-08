@@ -51,4 +51,16 @@ router.get '/file/*', requireLogin, (request, response)->
     response.api ->
         request.gitHubClient.fetchFile owner, repo, path
             .then (fileRecord)->
+                fileRecord.path = path
                 return data:fileRecord
+
+router.put '/file/*', requireLogin, (request, response)->
+    content = request.body.content
+    message = request.body.message
+    owner   = Repo.craftingGuideData.owner
+    path    = request.params[0]
+    repo    = Repo.craftingGuideData.name
+    sha     = request.body.sha
+
+    response.api ->
+        request.gitHubClient.updateFile owner, repo, path, message, content, sha
