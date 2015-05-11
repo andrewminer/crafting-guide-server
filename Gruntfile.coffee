@@ -44,7 +44,7 @@ module.exports = (grunt)->
                 files: ['./src/**/*.coffee', './test/**/*.coffee']
                 tasks: ['coffee', 'test']
 
-    grunt.registerTask 'default', 'build'
+    grunt.registerTask 'default', ['clean', 'build', 'test']
 
     grunt.registerTask 'build', ['coffee']
 

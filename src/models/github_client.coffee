@@ -34,10 +34,25 @@ module.exports = class GitHubClient
 
     # GitHub File Calls ############################################################################
 
+    createFile: (owner, repo, path, message, content)->
+        @_requireAuthorization()
+
+        body =
+            content: new Buffer(content, 'utf8').toString('base64')
+            message: message
+
+        promise = http.put "#{@apiBaseUrl}/repos/#{owner}/#{repo}/contents/#{path}", headers:@_headers, body:body
+            .timeout @timeout
+            .then (response)=>
+                @_parseResponse response
+                return null
+
+        return @_handleErrors promise
+
     fetchFile: (owner, repo, path)->
         @_requireAuthorization()
 
-        http.get "#{@apiBaseUrl}/repos/#{owner}/#{repo}/contents/#{path}", headers:@_headers
+        promise = http.get "#{@apiBaseUrl}/repos/#{owner}/#{repo}/contents/#{path}", headers:@_headers
             .timeout @timeout
             .then (response)=>
                 data = @_parseResponse response
@@ -45,26 +60,28 @@ module.exports = class GitHubClient
                     content: new Buffer(data.content, 'base64').toString('utf8')
                     sha: data.sha
             .catch (error)=>
-                if error instanceof w.TimeoutError
-                    HttpStatus.gatewayTimeout.throw 'GitHub failed to respond'
+                if error.statusCode is HttpStatus.notFound
+                    return content:'', sha:null
                 else
-                    HttpStatus.badGateway.throw error.message, {}, error
+                    throw error
+
+        return @_handleErrors promise
 
     updateFile: (owner, repo, path, message, content, sha)->
         @_requireAuthorization()
 
-        content = new Buffer(content, 'utf8').toString('base64')
-        body = message:message, content:content, sha:sha
-        http.put "#{@apiBaseUrl}/repos/#{owner}/#{repo}/contents/#{path}", headers:@_headers, body:body
+        body =
+            content: new Buffer(content, 'utf8').toString('base64')
+            message: message
+            sha:     sha
+
+        promise = http.put "#{@apiBaseUrl}/repos/#{owner}/#{repo}/contents/#{path}", headers:@_headers, body:body
             .timeout @timeout
             .then (response)=>
                 @_parseResponse response
                 return null
-            .catch (error)=>
-                if error instanceof w.TimeoutError
-                    HttpStatus.gatewayTimeout.throw 'GitHub failed to respond'
-                else
-                    HttpStatus.badGateway.throw error.message, {}, error
+
+        return @_handleErrors promise
 
     # GitHub Login Calls ###########################################################################
 
@@ -72,7 +89,7 @@ module.exports = class GitHubClient
         if not code? then return w.reject throw new Error 'code is required'
 
         body = client_id:@clientId, client_secret:@clientSecret, code:code
-        http.post "#{@baseUrl}/login/oauth/access_token", headers:@_headers, body:body
+        promise = http.post "#{@baseUrl}/login/oauth/access_token", headers:@_headers, body:body
             .timeout @timeout
             .then (response)=>
                 data = @_parseResponse response
@@ -80,29 +97,31 @@ module.exports = class GitHubClient
                     throw new Error "GitHub request failed: No access code included in body: #{response.body}"
                 @accessToken = data.access_token
                 return null
-            .catch (error)=>
-                if error instanceof w.TimeoutError
-                    HttpStatus.gatewayTimeout.throw 'GitHub failed to respond'
-                else
-                    HttpStatus.badGateway.throw error.message, {}, error
+
+        return @_handleErrors promise
 
     # GitHub User Calls ############################################################################
 
     fetchCurrentUser: ->
         @_requireAuthorization()
-        http.get "#{@apiBaseUrl}/user", headers:@_headers
+
+        promise = http.get "#{@apiBaseUrl}/user", headers:@_headers
             .timeout @timeout
             .then (response)=>
                 data = @_parseResponse response
                 user = _.pick data, 'avatar_url', 'email', 'login', 'name'
                 return user
-            .catch (error)=>
-                if error instanceof w.TimeoutError
-                    HttpStatus.gatewayTimeout.throw 'GitHub failed to respond'
-                else
-                    HttpStatus.badGateway.throw error.message, {}, error
+
+        return @_handleErrors promise
 
     # Private Methods ##############################################################################
+
+    _handleErrors: (promise)->
+        promise.catch (error)=>
+            if error instanceof w.TimeoutError
+                HttpStatus.gatewayTimeout.throw 'GitHub failed to respond'
+            else
+                HttpStatus.badGateway.throw error.message, {}, error
 
     _parseResponse: (response)->
         logger.verbose "GitHub response: #{_.ellipsize(_.pp(response), 1024)}"

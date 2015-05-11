@@ -63,4 +63,7 @@ router.put '/file/*', requireLogin, (request, response)->
     sha     = request.body.sha
 
     response.api ->
-        request.gitHubClient.updateFile owner, repo, path, message, content, sha
+        if sha?
+            request.gitHubClient.updateFile owner, repo, path, message, content, sha
+        else
+            request.gitHubClient.createFile owner, repo, path, message, content
