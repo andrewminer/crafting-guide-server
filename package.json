@@ -6,7 +6,7 @@
   "scripts": {
     "start": "foreman start",
     "test": "grunt test",
-    "postinstall": "grunt heroku:production",
+    "postinstall": "grunt heroku:production"
   },
   "repository": {
     "type": "git",
