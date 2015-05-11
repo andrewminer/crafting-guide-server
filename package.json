@@ -5,7 +5,8 @@
   "main": "./dist/index.js",
   "scripts": {
     "start": "foreman start",
-    "test": "grunt test"
+    "test": "grunt test",
+    "postinstall": "grunt heroku:production",
   },
   "repository": {
     "type": "git",
