@@ -61,9 +61,15 @@ router.put '/file/*', requireLogin, (request, response)->
     path    = request.params[0]
     repo    = Repo.craftingGuideData.name
     sha     = request.body.sha
+    login   = request.session.user.login
 
     response.api ->
-        if sha?
-            request.gitHubClient.updateFile owner, repo, path, message, content, sha
-        else
-            request.gitHubClient.createFile owner, repo, path, message, content
+        request.gitHubClient.isCollaborator owner, repo, login
+            .then (isCollaborator)->
+                if not isCollaborator
+                    request.gitHubClient.addCollaborator owner, repo, login
+            .then ->
+                if sha?
+                    request.gitHubClient.updateFile owner, repo, path, message, content, sha
+                else
+                    request.gitHubClient.createFile owner, repo, path, message, content

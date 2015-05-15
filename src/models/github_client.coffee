@@ -7,6 +7,7 @@ All rights reserved.
 
 HttpStatus = require '../http_status'
 {http}     = require 'crafting-guide-common'
+{Repo}     = require '../constants'
 
 ########################################################################################################################
 
@@ -17,13 +18,16 @@ module.exports = class GitHubClient
 
     constructor: (options={})->
         options.accessToken  ?= null
+        options.adminToken   ?= process.env.GITHUB_ADMIN_TOKEN
         options.apiBaseUrl   ?= GitHubClient.API_BASE_URL
         options.baseUrl      ?= GitHubClient.BASE_URL
         options.clientId     ?= process.env.GITHUB_CLIENT_ID
         options.clientSecret ?= process.env.GITHUB_CLIENT_SECRET
+        options.user         ?= null
         options.timeout      ?= 60000
 
-        _.extend this, _.pick options, 'accessToken', 'apiBaseUrl', 'baseUrl', 'clientId', 'clientSecret', 'timeout'
+        _.extend this, _.pick options,
+            'accessToken', 'adminToken', 'apiBaseUrl', 'baseUrl', 'clientId', 'clientSecret', 'user', 'timeout'
 
         @_headers =
             'Accept':     'application/json'
@@ -31,6 +35,33 @@ module.exports = class GitHubClient
 
         if not @clientId? then throw new Error "A GitHub Client ID must be provided"
         if not @clientSecret? then throw new Error "A GitHub Client Secret must be provided"
+
+    # GitHub Collaborator Calls ####################################################################
+
+    isCollaborator: (owner, repo, login)->
+        @_requireAdmin()
+
+        promise = http.get "#{@apiBaseUrl}/repos/#{owner}/#{repo}/collaborators/#{login}", headers:@_headers
+            .timeout @timeout
+            .then (response)=>
+                @_parseResponse response
+                return true
+            .catch (error)->
+                return false if error.statusCode is HttpStatus.notFound
+                throw error
+
+        return @_handleErrors promise
+
+    addCollaborator: (owner, repo, login)->
+        @_requireAdmin()
+
+        headers = _.extend {'Content-Length', 0}, @_headers
+        promise = http.put "#{@apiBaseUrl}/repos/#{owner}/#{repo}/collaborators/#{login}", headers:@_headers
+            .timeout @timeout
+            .then (response)=>
+                @_parseResponse response
+
+        return @_handleErrors promise
 
     # GitHub File Calls ############################################################################
 
@@ -129,6 +160,9 @@ module.exports = class GitHubClient
         if response.statusCode is 404
             HttpStatus.notFound.throw "GitHub could not find the requested resource"
 
+        if response.statusCode is 204
+            return {}
+
         try
             data = JSON.parse response.body
         catch error
@@ -142,6 +176,10 @@ module.exports = class GitHubClient
             HttpStatus.badGateway.throw "GitHub encountered a problem with the request: #{data.message}"
 
         return data
+
+    _requireAdmin: ->
+        if not @adminToken? then throw new Error "admin token required"
+        @_headers['Authorization'] = "token #{@adminToken}"
 
     _requireAuthorization: ->
         if not @accessToken? then throw new Error "user must be logged in first"

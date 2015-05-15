@@ -100,7 +100,7 @@ reportError = (error, request, response, next)->
 
 unpackCurrentUser = (request, response, next)->
     request.user = request.session?.user
-    request.gitHubClient = new GitHubClient accessToken:request.session?.accessToken
+    request.gitHubClient = new GitHubClient accessToken:request.session?.accessToken, user:request.user
 
     next()
 

@@ -13,7 +13,7 @@ for line in fs.readFileSync('.env', 'utf8').split('\n')
     process.env[key] = value
 
 GitHubClient = require './src/models/github_client'
-client = new GitHubClient accessToken:process.env.GITHUB_ACCESS_TOKEN
+client = new GitHubClient accessToken:process.env.GITHUB_TEST_TOKEN
 
 client.fetchCurrentUser()
     .then (userData)->
