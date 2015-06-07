@@ -88,7 +88,7 @@ module.exports = class GitHubClient
             .then (response)=>
                 data = @_parseResponse response
                 return result =
-                    content: new Buffer(data.content, 'base64').toString('utf8')
+                    content: data.content
                     sha: data.sha
             .catch (error)=>
                 if error.statusCode is HttpStatus.notFound
@@ -102,7 +102,7 @@ module.exports = class GitHubClient
         @_requireAuthorization()
 
         body =
-            content: new Buffer(content, 'utf8').toString('base64')
+            content: content
             message: message
             sha:     sha
 
