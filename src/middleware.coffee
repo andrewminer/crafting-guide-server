@@ -22,7 +22,8 @@ exports.addPrefixes = (app)->
     app.use(m) for m in [
         approveOrigin
         registerFinalizers
-        bodyParser.json()
+        bodyParser.json
+            limit: '1024kb'
         clientSession
             cookieName: CraftingGuideClient.SESSION_COOKIE
             duration: 1000 * 60 * 60 * 24 * 7 * 2 # 2 weeks in ms
