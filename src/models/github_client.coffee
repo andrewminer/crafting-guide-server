@@ -68,10 +68,7 @@ module.exports = class GitHubClient
     createFile: (owner, repo, path, message, content)->
         @_requireAuthorization()
 
-        body =
-            content: new Buffer(content, 'utf8').toString('base64')
-            message: message
-
+        body = content:content, message:message
         promise = http.put "#{@apiBaseUrl}/repos/#{owner}/#{repo}/contents/#{path}", headers:@_headers, body:body
             .timeout @timeout
             .then (response)=>
@@ -101,11 +98,7 @@ module.exports = class GitHubClient
     updateFile: (owner, repo, path, message, content, sha)->
         @_requireAuthorization()
 
-        body =
-            content: content
-            message: message
-            sha:     sha
-
+        body = content:content, message:message, sha:sha
         promise = http.put "#{@apiBaseUrl}/repos/#{owner}/#{repo}/contents/#{path}", headers:@_headers, body:body
             .timeout @timeout
             .then (response)=>
