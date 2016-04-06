@@ -29,6 +29,7 @@ exports.addPrefixes = (app)->
             duration: 1000 * 60 * 60 * 24 * 7 * 2 # 2 weeks in ms
             secret: 'CKpyGnY2C(]@Z38u'
             httpOnly: false
+            secure: false
         unpackCurrentUser
         logRequest
         addApiResponseMethod
