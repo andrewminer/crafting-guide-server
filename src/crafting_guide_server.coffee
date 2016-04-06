@@ -23,6 +23,7 @@ module.exports = class CraftingGuideServer
         @port       = port
 
         @expressApp.env = env
+        @expressApp.disable 'etag'
 
         middleware.addPrefixes @expressApp
         @expressApp.use '/', require './routers/root'
