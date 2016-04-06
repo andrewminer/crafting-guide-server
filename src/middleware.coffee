@@ -28,6 +28,7 @@ exports.addPrefixes = (app)->
             cookieName: CraftingGuideClient.SESSION_COOKIE
             duration: 1000 * 60 * 60 * 24 * 7 * 2 # 2 weeks in ms
             secret: 'CKpyGnY2C(]@Z38u'
+            httpOnly: false
         unpackCurrentUser
         logRequest
         addApiResponseMethod
