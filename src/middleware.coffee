@@ -30,6 +30,7 @@ exports.addPrefixes = (app)->
             secret: 'CKpyGnY2C(]@Z38u'
             cookie:
                 httpOnly: false
+                secure: false
         unpackCurrentUser
         logRequest
         addApiResponseMethod
