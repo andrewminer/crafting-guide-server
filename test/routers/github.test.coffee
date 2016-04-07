@@ -95,7 +95,7 @@ describe 'router: /github', ->
                     harness.client.fetchCurrentUser()
                 .catch (error)->
                     error.response.statusCode.should.equal 401
-                    error.response.json.message.should.equal 'you must be logged in to use this API'
+                    error.response.json.message.should.equal 'Not logged in'
 
 
     describe '/user', ->
