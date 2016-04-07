@@ -113,8 +113,9 @@ unpackCurrentUser = (request, response, next)->
 
 exports.requireLogin = (request, response, next)->
     if not request.session?.accessToken?
-        status.unauthorized.throw 'you must be logged in to use this API'
-    next()
+        writeErrorResponse { statusCode:status.unauthorized, message:'Not logged in' }, request, response
+    else
+        next()
 
 # Helper Functions #####################################################################################################
 
