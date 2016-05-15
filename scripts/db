@@ -1,0 +1,129 @@
+#!/bin/bash
+
+USAGE=$(cat <<-END
+USAGE: ./scripts/db <command> [<option>*]
+
+COMMANDS:
+
+    console                     connect to the database in the selected env
+    create-test-db              clone the database (without data) and make a
+                                    test database with the same schema
+    nuke                        erase the database and start over from scratch
+    seed                        populate seed data from ./src/db/seed.coffee
+
+    create-migration            create a new migration. Requires --name
+    migrate                     apply all unapplied migrations
+    redo                        rollback the last migration and re-migrate
+    rollback                    rollback the previous migration
+
+OPTIONS:
+
+    --name <migration name>     the name of the migration to create
+END
+)
+
+DATABASE_NAME="crafting_guide"
+MIGRATIONS_DIR="./src/db/migrations"
+
+# Command Functions ####################################################################################################
+
+function console {
+    echo "Connected to $DATABASE_NAME in the $ENV environment"
+    psql $DATABASE_URL
+}
+
+function create-migration {
+    [[ "$NAME" == "" ]] && usage "Expected the --name option"
+    db-migrate create $NAME $OPTIONS
+}
+
+function create-test-db {
+    pg_dump $DATABASE_NAME -s > .tmp.schema.sql
+    psql -c "drop database if exists ${DATABASE_NAME}_test;" >/dev/null
+    psql -c "create database ${DATABASE_NAME}_test;" >/dev/null
+    psql "${DATABASE_NAME}_test" < .tmp.schema.sql >/dev/null
+    rm .tmp.schema.sql
+}
+
+function rollback {
+    db-migrate down $OPTIONS
+}
+
+function nuke {
+    if [[ "$ENV" == "local" ]]; then
+        psql -c "drop database if exists $DATABASE_NAME;"
+        psql -c "create database $DATABASE_NAME;"
+    elif [[ "$ENV" == "staging" ]]; then
+        echo "Nuking staging is not currently supported"
+        exit 0
+    elif [[ "$ENV" == "prod" ]]; then
+        echo "Nuking prod is not currently supported"
+        exit 0
+    else
+        echo "Unknown environment: $ENV"
+        exit 1
+    fi
+
+    migrate
+    seed
+}
+
+function migrate {
+    db-migrate up $OPTIONS
+}
+
+function redo {
+    rollback && migrate
+}
+
+function seed {
+    echo "loading seed data..."
+    coffee ./src/db/seed.coffee
+}
+
+function usage {
+    echo "$USAGE"; echo
+    [[ "$1" != "" ]] && echo "ERROR: $*" && echo
+    exit 1
+}
+
+########################################################################################################################
+
+COMMAND="$1"
+shift
+
+[[ "$COMMAND" == "" ]] && usage
+
+if ! echo "$COMMAND" | egrep -q "console|create-migration|create-test-db|migrate|nuke|redo|rollback|seed"; then
+    usage "Unknown command: $COMMAND"
+fi
+
+DRY_RUN=""
+ENV="local"
+NAME=""
+VERBOSE=""
+
+while [[ "$1" != "" ]]; do
+    case "$1" in
+        "--dry-run") DRY_RUN="--dry-run";;
+        "--name")    shift; NAME="$1";;
+        "--staging") ENV="staging";;
+        "--prod")    ENV="prod";;
+        "--verbose") VERBOSE="--verbose";;
+    esac
+    shift
+done
+
+if [[ "$ENV" == "local" ]]; then
+    export DATABASE_URL="postgres:///crafting_guide"
+elif [[ "$ENV" == "staging" ]]; then
+    echo "Staging is not currently supported"
+elif [[ "$ENV" == "prod" ]]; then
+    echo "Prod is not currently supported"
+else
+    usage "Unknown environment: $ENV"
+fi
+
+OPTIONS="$DRY_RUN $VERBOSE --migrations-dir $MIGRATIONS_DIR --coffee-file"
+
+$COMMAND

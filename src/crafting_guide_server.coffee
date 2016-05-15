@@ -1,13 +1,14 @@
-###
-Crafting Guide Server - server.coffee
-
-Copyright (c) 2015 by Redwood Labs
-All rights reserved.
-###
+#
+# Crafting Guide - crafting_guide_server.coffee
+#
+# Copyright © 2014-2016 by Redwood Labs
+# All rights reserved.
+#
 
 express    = require 'express'
 http       = require 'http'
 middleware = require './middleware'
+{Logger}   = require 'crafting-guide-common'
 
 ########################################################################################################################
 
@@ -21,6 +22,7 @@ module.exports = class CraftingGuideServer
 
         @expressApp = express()
         @port       = port
+        @env        = env
 
         @expressApp.env = env
         @expressApp.disable 'etag'
@@ -28,6 +30,8 @@ module.exports = class CraftingGuideServer
         middleware.addPrefixes @expressApp
         @expressApp.use '/', require './routers/root'
         @expressApp.use '/github', require './routers/github'
+        @expressApp.use '/modBallot', require './routers/mod_ballots'
+        @expressApp.use '/users', require './routers/users'
         middleware.addSuffixes @expressApp
 
         @httpServer = http.createServer @expressApp
@@ -36,7 +40,7 @@ module.exports = class CraftingGuideServer
         deferred = w.defer()
         @httpServer.once 'error', (e)-> deferred.reject e
         @httpServer.listen @port, =>
-            logger.warning "Crafting Guide Server is listening on port #{@port}"
+            logger.warning "Crafting Guide Server is listening on port #{@port} in the #{@env} environment"
             deferred.resolve this
         return deferred.promise
 

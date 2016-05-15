@@ -1,12 +1,13 @@
-###
-Crafting Guide Server - harness.coffee
-
-Copyright (c) 2015 by Redwood Labs
-All rights reserved.
-###
+#
+# Crafting Guide - harness.coffee
+#
+# Copyright © 2014-2016 by Redwood Labs
+# All rights reserved.
+#
 
 CraftingGuideServer   = require '../src/crafting_guide_server'
 {CraftingGuideClient} = require 'crafting-guide-common'
+store                 = '../src/store'
 
 ########################################################################################################################
 

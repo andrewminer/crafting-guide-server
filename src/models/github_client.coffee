@@ -1,9 +1,9 @@
-###
-Crafting Guide Server - github_client.coffee
-
-Copyright (c) 2015 by Redwood Labs
-All rights reserved.
-###
+#
+# Crafting Guide - github_client.coffee
+#
+# Copyright © 2014-2016 by Redwood Labs
+# All rights reserved.
+#
 
 HttpStatus = require '../http_status'
 {http}     = require 'crafting-guide-common'
@@ -23,11 +23,10 @@ module.exports = class GitHubClient
         options.baseUrl      ?= GitHubClient.BASE_URL
         options.clientId     ?= process.env.GITHUB_CLIENT_ID
         options.clientSecret ?= process.env.GITHUB_CLIENT_SECRET
-        options.user         ?= null
         options.timeout      ?= 60000
 
         _.extend this, _.pick options,
-            'accessToken', 'adminToken', 'apiBaseUrl', 'baseUrl', 'clientId', 'clientSecret', 'user', 'timeout'
+            'accessToken', 'adminToken', 'apiBaseUrl', 'baseUrl', 'clientId', 'clientSecret', 'timeout'
 
         @_headers =
             'Accept':     'application/json'
@@ -133,8 +132,8 @@ module.exports = class GitHubClient
             .timeout @timeout
             .then (response)=>
                 data = @_parseResponse response
-                user = _.pick data, 'avatar_url', 'email', 'login', 'name'
-                return user
+                gitHubUser = _.pick data, 'id', 'avatar_url', 'email', 'login', 'name'
+                return gitHubUser
 
         return @_handleErrors promise
 

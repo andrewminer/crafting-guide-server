@@ -1,7 +1,9 @@
-###
-# Copyright (c) 2014 by Redwood Labs
+#
+# Crafting Guide - http_status.coffee
+#
+# Copyright © 2014-2016 by Redwood Labs
 # All rights reserved.
-###
+#
 
 ########################################################################################################################
 

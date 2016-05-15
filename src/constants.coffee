@@ -1,9 +1,9 @@
-###
-Crafting Guide Server - constants.coffee
-
-Copyright (c) 2015 by Redwood Labs
-All rights reserved.
-###
+#
+# Crafting Guide - constants.coffee
+#
+# Copyright © 2014-2016 by Redwood Labs
+# All rights reserved.
+#
 
 exports.Repo                 = Repo = {}
 Repo.craftingGuideData       = {}

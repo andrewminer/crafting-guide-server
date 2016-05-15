@@ -1,11 +1,16 @@
 #
-# Crafting Guide - root.coffee
+# Crafting Guide - users.coffee
 #
 # Copyright © 2014-2016 by Redwood Labs
 # All rights reserved.
 #
 
-express = require 'express'
+express        = require 'express'
+store          = require '../store'
+_              = require '../underscore'
+{requireLogin} = require '../middleware'
+
+User = store.definitions.User
 
 ########################################################################################################################
 
@@ -13,5 +18,6 @@ module.exports = router = express.Router()
 
 # Public Routers ###################################################################################
 
-router.get '/ping', (request, response)->
-    response.api message:request.query.message
+router.get '/current', requireLogin, (request, response)->
+    response.api ->
+        return request.user

@@ -1,16 +1,19 @@
-###
-Crafting Guide Server - middleware.coffee
+#
+# Crafting Guide - middleware.coffee
+#
+# Copyright © 2014-2016 by Redwood Labs
+# All rights reserved.
+#
 
-Copyright (c) 2015 by Redwood Labs
-All rights reserved.
-###
-
-GitHubClient          = require './models/github_client'
 bodyParser            = require 'body-parser'
 clientSession         = require 'client-sessions'
+GitHubClient          = require './models/github_client'
 status                = require './http_status'
+store                 = require './store'
 {CraftingGuideClient} = require 'crafting-guide-common'
 {Logger}              = require 'crafting-guide-common'
+
+User = store.definitions.User
 
 ########################################################################################################################
 
@@ -39,15 +42,18 @@ exports.addPrefixes = (app)->
 
 exports.addSuffixes = (app)->
     app.get '*', (request, response)->
-        request.api -> status.notFound.throw "unknown request: #{request.path}"
+        request.api -> status.notFound.throw "unknown API endpoint: #{request.path}"
     app.use reportError
 
 addApiResponseMethod = (request, response, next)->
-    response.api = ((req, res)-> return (value)->
-        if _.isFunction(value) then value = value()
-        promise = w(value)
+    response.api = ((req, res)-> return (v)->
+        if _.isFunction(v)
+            promise = w.try(v)
+        else
+            promise = w(v)
+
         result = null
-        w(promise)
+        promise
             .then (r)-> result = r
             .timeout 60000, new Error 'Timed out while answering request'
             .then -> writeSuccessResponse result, req, res
@@ -60,7 +66,7 @@ approveOrigin = (request, response, next)->
     if origin? and origin.match /^http:\/\/([a-z]{1,7}\.)?crafting-guide\.com(:[0-9]{1,4})?/
         response.set 'Access-Control-Allow-Origin', origin
         response.set 'Access-Control-Allow-Credentials', 'true'
-        response.set 'Access-Control-Allow-Methods', request.headers['access-control-request-method']
+        response.set 'Access-Control-Allow-Methods', request.headers['access-control-request-methods']
         response.set 'Access-Control-Allow-Headers', request.headers['access-control-request-headers']
 
     if request.method is 'OPTIONS'
@@ -104,15 +110,22 @@ reportError = (error, request, response, next)->
     runFinalizers request, response
 
 unpackCurrentUser = (request, response, next)->
-    request.user = request.session?.user
-    request.gitHubClient = new GitHubClient accessToken:request.session?.accessToken, user:request.user
+    request.gitHubClient = new GitHubClient
 
-    next()
+    if request.session?.userId?
+        User.find request.session.userId
+            .then (user)->
+                if user?
+                    request.user = user
+                    request.gitHubClient.accessToken = user.gitHubAccessToken
+                next()
+    else
+        next()
 
 # Optional Middleware ##################################################################################################
 
 exports.requireLogin = (request, response, next)->
-    if not request.session?.accessToken?
+    if not request.user?.gitHubAccessToken?
         writeErrorResponse { statusCode:status.unauthorized, message:'Not logged in' }, request, response
     else
         next()
@@ -129,16 +142,21 @@ runFinalizers = (request, response)->
 
 writeErrorResponse = (error, request, response)->
     statusCode = if error.statusCode? then error.statusCode else status.internalServerError
+
     if statusCode is status.internalServerError
         logger.error "Unexpected internal error: #{error.stack}"
+
     if statusCode is status.unauthorized
+        if request.user?
+            user.gitHubAccessToken = null
+            User.save user
+                .catch (error)-> logger.error -> "Could not clear user access token: #{error.stack}"
         if request.session?
-            request.session.accessToken = null
-            request.session.user = null
+            request.session.userId = null
 
     result = {status:'error', message:error.message}
     result.data = error.data if error.data?
-    result.stack = error.stack if request.app.env in ['test' or 'development']
+    result.stack = error.stack if request.app.env in ['test' or 'local']
 
     writeResponse request, response, statusCode, result
 
@@ -148,10 +166,7 @@ writeResponse = (request, response, statusCode, result)->
     runFinalizers request, response
 
 writeSuccessResponse = (result, request, response)->
-    if _.isString result then result = {message:result}
-    result           ?= {}
-    result.data      ?= null
-    result.message   ?= 'ok'
-    result.status    ?= 'success'
+    if result is null then result = { message:'ok' }
+    if _.isString result then result = { message:result }
 
     writeResponse request, response, status.ok, result

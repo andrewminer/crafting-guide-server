@@ -1,6 +1,6 @@
 deployment:
   staging:
-    branch: master
+    branch: staging
     heroku:
       appname: crafting-guide-staging
   production:

@@ -1,15 +1,18 @@
-###
-Crafting Guide Server - github.coffee
+#
+# Crafting Guide - github.coffee
+#
+# Copyright © 2014-2016 by Redwood Labs
+# All rights reserved.
+#
 
-Copyright (c) 2015 by Redwood Labs
-All rights reserved.
-###
-
-GitHubClient   = require '../models/github_client'
 express        = require 'express'
-{Repo}         = require '../constants'
+GitHubClient   = require '../models/github_client'
+store          = require '../store'
 {http}         = require 'crafting-guide-common'
+{Repo}         = require '../constants'
 {requireLogin} = require '../middleware'
+
+User = store.definitions.User
 
 ########################################################################################################################
 
@@ -17,31 +20,40 @@ module.exports = router = express.Router()
 
 # Public Routers ###################################################################################
 
-router.post '/complete-login', (request, response)->
+router.post '/session', (request, response)->
+    gitHubUser = null
+
     response.api ->
         client = request.gitHubClient
         client.completeLogin request.body.code
             .then ->
-                request.session.accessToken = client.accessToken
-                client.accessToken = client.accessToken
                 client.fetchCurrentUser()
-            .then (user)->
-                request.session.user = user
-                return data:user:user
+            .then (g)->
+                gitHubUser = g
+                User.findAll gitHubId:gitHubUser.id
+            .then (users)->
+                if users.length > 0
+                    user = users[0]
+                else
+                    user = User.createInstance()
 
-router.delete '/logout', (request, response)->
+                user.copyGitHubUser gitHubUser
+                user.gitHubAccessToken = client.accessToken
+                User.create user, upsert:true
+            .then (user)->
+                request.session.userId = user.id
+                return user
+
+router.delete '/session', (request, response)->
     response.api ->
-        request.session.accessToken = null
-        request.session.user = null
+        return null unless request.user?
+
+        User.update request.user.id, gitHubAccessToken:null
+            .then ->
+                request.session.userId = null
+                return null
 
 # Private Routes ###################################################################################
-
-router.get '/user', requireLogin, (request, response)->
-    response.api ->
-        request.gitHubClient.fetchCurrentUser()
-            .then (user)->
-                request.session.user = user
-                return data:user:user
 
 router.get '/file/*', requireLogin, (request, response)->
     owner = Repo.craftingGuideData.owner

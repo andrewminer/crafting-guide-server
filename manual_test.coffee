@@ -18,10 +18,10 @@ client = new GitHubClient accessToken:process.env.GITHUB_TEST_TOKEN
 client.fetchCurrentUser()
     .then (userData)->
         logger.info "user data: #{JSON.stringify(userData)}"
-    .then ->
-        client.fetchFile 'andrewminer', 'crafting-guide-data', 'foo-README.md'
-    .then (file)->
-        logger.info "retrieved file (#{file.sha}) is:\n\n#{file.content}\n\n"
+    # .then ->
+    #     client.fetchFile 'andrewminer', 'crafting-guide-data', 'foo-README.md'
+    # .then (file)->
+    #     logger.info "retrieved file (#{file.sha}) is:\n\n#{file.content}\n\n"
     #     file.content = 'sample content alpha'
     #
     #     client.updateFile 'andrewminer', 'crafting-guide-data', 'README.md', 'test update', file.content, file.sha

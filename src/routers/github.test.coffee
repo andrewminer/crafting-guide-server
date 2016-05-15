@@ -1,12 +1,12 @@
-###
-Crafting Guide Server - github.test.coffee
+#
+# Crafting Guide - github.test.coffee
+#
+# Copyright © 2014-2016 by Redwood Labs
+# All rights reserved.
+#
 
-Copyright (c) 2015 by Redwood Labs
-All rights reserved.
-###
-
-GitHubClient     = require '../../src/models/github_client'
-Harness          = require '../harness'
+GitHubClient     = require '../models/github_client'
+Harness          = require '../../test/harness'
 {TestHttpServer} = require 'crafting-guide-common'
 
 ########################################################################################################################
@@ -23,27 +23,41 @@ gitHubServer = null
 ########################################################################################################################
 
 describe 'router: /github', ->
+    @slow 250 # ms
 
     before ->
         gitHubServer = new TestHttpServer 8002
         w.join gitHubServer.start(), harness.before()
 
-    beforeEach -> w.join gitHubServer.clear(), harness.beforeEach()
+    beforeEach ->
+        @gitHubUserData =
+            avatar_url: 'http://avatar.url'
+            email:      'test.subject@email.com'
+            id:         '123'
+            login:      'test_subject'
+            name:       'Test Subject'
+
+        @userData =
+            avatarUrl:   'http://avatar.url'
+            email:       'test.subject@email.com'
+            gitHubId:    123
+            gitHubLogin: 'test_subject'
+            name:        'Test Subject'
+
+        w.join gitHubServer.clear(), harness.beforeEach()
 
     after -> w.join gitHubServer.stop()
 
-    describe '/complete-login', ->
+    describe '/session POST', ->
 
         it 'returns a user object when successful', ->
-            userData = login:'log', avatar_url:'ava', name:'nam', email:'ema'
-
             gitHubServer.pushResponse statusCode:200, body:JSON.stringify access_token:'tok'
-            gitHubServer.pushResponse statusCode:200, body:JSON.stringify userData
+            gitHubServer.pushResponse statusCode:200, body:JSON.stringify @gitHubUserData
 
-            harness.client.completeGitHubLogin code:'cod'
-                .then (response)->
-                    user = response.json.data.user
-                    user.should.eql userData
+            harness.client.createSession code:'cod'
+                .then (response)=>
+                    user = response.json
+                    _.pick(user, _.keys(@userData)).should.eql @userData
 
                     r = gitHubServer.requests[0]
                     r.method.should.equal 'POST'
@@ -60,7 +74,7 @@ describe 'router: /github', ->
         it 'returns an error if the GitHub call fails', ->
             gitHubServer.pushResponse statusCode:500, body:'internal server error'
 
-            harness.client.completeGitHubLogin code:'cod'
+            harness.client.createSession code:'cod'
                 .catch (error)->
                     error.response.statusCode.should.equal 502
                     error.response.json.message.should.equal "Could not parse GitHub's response " +
@@ -69,7 +83,7 @@ describe 'router: /github', ->
         it 'returns an error if no access token was returned', ->
             gitHubServer.pushResponse statusCode:200, body:JSON.stringify message:'nothing to see here'
 
-            harness.client.completeGitHubLogin code:'cod'
+            harness.client.createSession code:'cod'
                 .catch (error)->
                     error.response.statusCode.should.equal 502
                     error.response.json.message.should.equal 'GitHub request failed: No access code included in ' +
@@ -78,38 +92,37 @@ describe 'router: /github', ->
     describe '/logout', ->
 
         it 'causes subsequent calls to request a login', ->
-            userData = login:'log', avatar_url:'ava', name:'nam', email:'ema'
             gitHubServer.pushResponse statusCode:200, body:JSON.stringify access_token:'tok'
-            gitHubServer.pushResponse statusCode:200, body:JSON.stringify userData
-            gitHubServer.pushResponse statusCode:200, body:JSON.stringify userData
+            gitHubServer.pushResponse statusCode:200, body:JSON.stringify @gitHubUserData
+            gitHubServer.pushResponse statusCode:200, body:JSON.stringify @gitHubUserData
             loginRequested = false
 
-            harness.client.completeGitHubLogin code:'cod'
-                .then (response)->
-                    response.json.data.user.should.eql userData
-                    harness.client.fetchCurrentUser()
-                .then (response)->
-                    response.json.data.user.should.eql userData
-                    harness.client.logout()
+            harness.client.createSession code:'cod'
+                .then (response)=>
+                    _.pick(response.json, _.keys(@userData)).should.eql @userData
+                    harness.client.getCurrentUser()
+                .then (response)=>
+                    _.pick(response.json, _.keys(@userData)).should.eql @userData
+                    harness.client.deleteSession()
                 .then ->
-                    harness.client.fetchCurrentUser()
+                    harness.client.getCurrentUser()
                 .catch (error)->
+                    if not error.response? then throw error
+
                     error.response.statusCode.should.equal 401
                     error.response.json.message.should.equal 'Not logged in'
-
 
     describe '/user', ->
 
         it 'returns a full user record when logged in', ->
-            userData = login:'log', avatar_url:'ava', name:'nam', email:'ema'
             gitHubServer.pushResponse statusCode:200, body:JSON.stringify access_token:'tok'
-            gitHubServer.pushResponse statusCode:200, body:JSON.stringify userData
-            gitHubServer.pushResponse statusCode:200, body:JSON.stringify userData
+            gitHubServer.pushResponse statusCode:200, body:JSON.stringify @gitHubUserData
+            gitHubServer.pushResponse statusCode:200, body:JSON.stringify @gitHubUserData
 
-            harness.client.completeGitHubLogin code:'cod'
-                .then (response)->
-                    response.json.data.user.should.eql userData
+            harness.client.createSession code:'cod'
+                .then (response)=>
+                    _.pick(response.json, _.keys(@userData)).should.eql @userData
 
-                    harness.client.fetchCurrentUser()
-                        .then (response)->
-                            response.json.data.user.should.eql userData
+                    harness.client.getCurrentUser()
+                        .then (response)=>
+                            _.pick(response.json, _.keys(@userData)).should.eql @userData

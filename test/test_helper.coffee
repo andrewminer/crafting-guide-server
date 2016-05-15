@@ -1,9 +1,9 @@
-###
-Crafting Guide Common - test_helper.coffee
-
-Copyright (c) 2015 by Redwood Labs
-All rights reserved.
-###
+#
+# Crafting Guide - test_helper.coffee
+#
+# Copyright © 2014-2016 by Redwood Labs
+# All rights reserved.
+#
 
 {Logger} = require 'crafting-guide-common'
 
@@ -25,3 +25,8 @@ global.util   = require 'util'
 global.w      = require 'when'
 
 _.mixin require('crafting-guide-common').stringMixins
+
+# Mocha Test Helpers ###################################################################################################
+
+process.env.DATABASE_URL = 'postgres:///crafting_guide_test'
+store = require '../src/store'

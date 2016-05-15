@@ -1,0 +1,19 @@
+#!/bin/bash
+
+if ! which grunt >/dev/null; then
+    echo "Installing grunt..."
+    npm install -g grunt-cli || exit 1
+fi
+
+if ! which db-migrate >/dev/null; then
+    echo "Installing db-migrate..."
+    npm install -g db-migrate || exit 1
+    npm install -g db-migrate-pg || exit 1
+fi
+
+if ! which psql >/dev/null; then
+    echo "ERROR: You do not have Postgres installed!"
+    exit 1
+fi
+
+exit 0

@@ -1,11 +1,11 @@
-###
-Crafting Guide Server - root.test.coffee
+#
+# Crafting Guide - root.test.coffee
+#
+# Copyright © 2014-2016 by Redwood Labs
+# All rights reserved.
+#
 
-Copyright (c) 2015 by Redwood Labs
-All rights reserved.
-###
-
-Harness = require '../harness'
+Harness = require '../../test/harness'
 
 ########################################################################################################################
 

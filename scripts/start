@@ -1,0 +1,14 @@
+#!/bin/bash
+
+if ! which nodemon; then
+    npm install -g nodemon
+fi
+
+[[ "$PORT" == "" ]] && export PORT="4347"
+[[ "$NODE_ENV" == "" ]] && export NODE_ENV="local"
+
+pushd './src/' &>/dev/null
+clear
+nodemon ./index.coffee $*
+echo ''
+popd &>/dev/null

@@ -1,0 +1,23 @@
+#!/bin/bash
+
+function die {
+    echo $*
+    exit 1
+}
+
+ENVIRONMENT=""
+while [[ "$1" != "" ]]; do
+    case "$1" in
+        "--staging") ENVIRONMENT="staging";;
+        "--prod") ENVIRONMENT="production";;
+        *) die "Please specify environment: --staging or --prod";;
+    esac
+    shift
+done
+
+git push \
+    && git checkout $ENVIRONMENT \
+    && git rebase master \
+    && git push \
+    && git checkout master \
+    || die "Could not publish changes"

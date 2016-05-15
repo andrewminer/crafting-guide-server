@@ -1,7 +1,9 @@
-###
-# Copyright (c) 2014 by Redwood Labs
+#
+# Crafting Guide - index.coffee
+#
+# Copyright © 2014-2016 by Redwood Labs
 # All rights reserved.
-###
+#
 
 global._    = require 'underscore'
 global.util = require 'util'

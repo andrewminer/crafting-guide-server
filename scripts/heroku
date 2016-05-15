@@ -1,0 +1,49 @@
+#!/bin/bash
+
+USAGE=$(cat <<-END
+
+    USAGE: scripts/heroku <command> [<option> <option>...]
+
+        commands:
+
+            tail        start tailing the logs from the specified environment
+
+        options:
+
+            --prod      use the production environment instead of staging
+END
+)
+
+# Command Functions ####################################################################################################
+
+function tail {
+    heroku logs --tail $ENV_OPTION
+}
+
+function usage {
+    echo "$USAGE"; echo
+    exit 1
+}
+
+########################################################################################################################
+
+COMMAND="$1"
+shift
+
+[[ "$COMMAND" == "" ]] && usage
+
+if ! echo "$COMMAND" | egrep -q "tail"; then
+    usage "Unknown command: $COMMAND"
+fi
+
+ENV_OPTION="--remote staging"
+while [[ "$1" != "" ]]; do
+    case $1 in
+        "--prod") ENV_OPTION="--remote production";;
+        "-h") usage;;
+    esac
+    shift
+done
+
+[[ "$COMMAND" == "" ]] && usage
+$COMMAND
