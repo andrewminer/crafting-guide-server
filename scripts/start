@@ -1,14 +1,15 @@
 #!/bin/bash
 
-if ! which nodemon; then
-    npm install -g nodemon
+if ! which npm >/dev/null; then
+    echo "FATAL: Please install Node.js on this machine!"
+    exit 1
 fi
 
-[[ "$PORT" == "" ]] && export PORT="4347"
-[[ "$NODE_ENV" == "" ]] && export NODE_ENV="local"
+if ! which nodemon >/dev/null; then
+    echo "WARNING: nodemon not present! Installing..."
+    npm install -g nodemon || exit 1
+fi
 
-pushd './src/' &>/dev/null
 clear
-nodemon ./index.coffee $*
+nodemon ./src/index.coffee $*
 echo ''
-popd &>/dev/null

@@ -7,15 +7,14 @@
 
 JSData     = require 'js-data'
 SqlAdapter = require 'js-data-sql'
-{Logger}   = require 'crafting-guide-common'
-
-global.logger ?= new Logger
 
 ########################################################################################################################
 
 module.exports = store = new JSData.DS()
 
 if process.env.DATABASE_URL?
+    logger.info -> "Connecting to the Postgres DB at: #{process.env.DATABASE_URL}"
+
     postgresAdapter = new SqlAdapter
         client: 'pg' # postgres
         connection: process.env.DATABASE_URL

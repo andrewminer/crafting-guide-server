@@ -66,7 +66,7 @@ approveOrigin = (request, response, next)->
     if origin? and origin.match /^http:\/\/([a-z]{1,7}\.)?crafting-guide\.com(:[0-9]{1,4})?/
         response.set 'Access-Control-Allow-Origin', origin
         response.set 'Access-Control-Allow-Credentials', 'true'
-        response.set 'Access-Control-Allow-Methods', request.headers['access-control-request-methods']
+        response.set 'Access-Control-Allow-Methods', request.headers['access-control-request-method']
         response.set 'Access-Control-Allow-Headers', request.headers['access-control-request-headers']
 
     if request.method is 'OPTIONS'

@@ -5,19 +5,21 @@
 # All rights reserved.
 #
 
-global._    = require 'underscore'
-global.util = require 'util'
-global.w    = require 'when'
+require('dotenv').config()
 
-CraftingGuideServer = require './crafting_guide_server'
-{Logger}            = require 'crafting-guide-common'
+{Logger}      = require 'crafting-guide-common'
+global.logger = new Logger level:Logger.VERBOSE
+
+global._ = require 'underscore'
+_.mixin require('crafting-guide-common').stringMixins
+
+global.util = require 'util'
+
+global.w    = require 'when'
 
 ########################################################################################################################
 
-_.mixin require('crafting-guide-common').stringMixins
-
-global.logger = new Logger level:Logger.VERBOSE
-
+CraftingGuideServer = require './crafting_guide_server'
 server = new CraftingGuideServer process.env.PORT, process.env.NODE_ENV
 
 for signal in ['SIGINT', 'SIGTERM']

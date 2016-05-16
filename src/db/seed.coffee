@@ -5,6 +5,9 @@
 # All rights reserved.
 #
 
+{Logger}      = require 'crafting-guide-common'
+global.logger = new Logger level:Logger.WARNING
+
 store = require '../store'
 w     = require 'when'
 

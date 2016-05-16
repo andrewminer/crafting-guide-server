@@ -6,6 +6,7 @@ USAGE=$(cat <<-END
 
         commands:
 
+            dburl       retrieves the fully-qualified URL for the database
             tail        start tailing the logs from the specified environment
 
         options:
@@ -16,8 +17,12 @@ END
 
 # Command Functions ####################################################################################################
 
+function dburl {
+    heroku config:get DATABASE_URL --app $APP
+}
+
 function tail {
-    heroku logs --tail $ENV_OPTION
+    heroku logs --tail --app $APP
 }
 
 function usage {
@@ -32,18 +37,21 @@ shift
 
 [[ "$COMMAND" == "" ]] && usage
 
-if ! echo "$COMMAND" | egrep -q "tail"; then
+if ! echo "$COMMAND" | egrep -q "dburl|tail"; then
     usage "Unknown command: $COMMAND"
 fi
 
-ENV_OPTION="--remote staging"
+ENV="staging"
 while [[ "$1" != "" ]]; do
     case $1 in
-        "--prod") ENV_OPTION="--remote production";;
+        "--prod") ENV="prod";;
         "-h") usage;;
     esac
     shift
 done
+
+[[ "$ENV" == "staging" ]] && APP="crafting-guide-staging"
+[[ "$ENV" == "prod" ]] && APP="crafting-guide-production"
 
 [[ "$COMMAND" == "" ]] && usage
 $COMMAND

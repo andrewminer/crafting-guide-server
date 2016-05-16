@@ -50,7 +50,8 @@ router.delete '/session', (request, response)->
 
         User.update request.user.id, gitHubAccessToken:null
             .then ->
-                request.session.userId = null
+                for key, value of request.session
+                    delete request.session[key]
                 return null
 
 # Private Routes ###################################################################################

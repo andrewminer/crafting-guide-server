@@ -1,5 +1,20 @@
 #!/bin/bash
 
+if ! which heroku >/dev/null; then
+    echo "FATAL: heroku not found!  Please install Heroku!"
+    exit 1
+fi
+
+if ! which psql >/dev/null; then
+    echo "FATAL: psql not found!  Please install Postgres!"
+    exit 1
+fi
+
+if ! which db-migrate >/dev/null; then
+    echo "WARNING: db-migrate not found! Installing now..."
+    npm install -g db-migrate
+fi
+
 USAGE=$(cat <<-END
 USAGE: ./scripts/db <command> [<option>*]
 
@@ -19,23 +34,29 @@ COMMANDS:
 OPTIONS:
 
     --name <migration name>     the name of the migration to create
+    --staging                   use the staging environment instead of local
+    --prod                      use the prod environment instead of local
 END
 )
 
 DATABASE_NAME="crafting_guide"
 MIGRATIONS_DIR="./src/db/migrations"
 
+COMMANDS="true"
+
 # Command Functions ####################################################################################################
 
 function console {
-    echo "Connected to $DATABASE_NAME in the $ENV environment"
+    echo "Connected to $DATABASE_URL in the $ENV environment"
     psql $DATABASE_URL
 }
+COMMANDS="$COMMANDS|console"
 
 function create-migration {
     [[ "$NAME" == "" ]] && usage "Expected the --name option"
     db-migrate create $NAME $OPTIONS
 }
+COMMANDS="$COMMANDS|create-migration"
 
 function create-test-db {
     pg_dump $DATABASE_NAME -s > .tmp.schema.sql
@@ -44,21 +65,29 @@ function create-test-db {
     psql "${DATABASE_NAME}_test" < .tmp.schema.sql >/dev/null
     rm .tmp.schema.sql
 }
+COMMANDS="$COMMANDS|create-test-db"
 
 function rollback {
     db-migrate down $OPTIONS
 }
+COMMANDS="$COMMANDS|rollback"
 
 function nuke {
+    read -p "Really destroy the database in $ENV? Type \"$ENV\" to continue: " RESPONSE
+    if [[ "$RESPONSE" != "$ENV" ]]; then
+        echo "Aborting!"
+        exit 0
+    fi
+
     if [[ "$ENV" == "local" ]]; then
         psql -c "drop database if exists $DATABASE_NAME;"
         psql -c "create database $DATABASE_NAME;"
-    elif [[ "$ENV" == "staging" ]]; then
-        echo "Nuking staging is not currently supported"
-        exit 0
-    elif [[ "$ENV" == "prod" ]]; then
-        echo "Nuking prod is not currently supported"
-        exit 0
+    elif [[ "$APP" != "" ]]; then
+        ADDON_ID=$(heroku addons | grep "$APP" | grep postgresql | awk '{print $2}')
+        ADDON_TYPE=$(heroku addons | grep "$APP" | grep postgresql | awk '{print $3}')
+        heroku addons:destroy $ADDON_ID --confirm $APP
+        heroku addons:create $ADDON_TYPE --app $APP
+        set-database-url
     else
         echo "Unknown environment: $ENV"
         exit 1
@@ -67,24 +96,53 @@ function nuke {
     migrate
     seed
 }
+COMMANDS="$COMMANDS|nuke"
 
 function migrate {
     db-migrate up $OPTIONS
 }
+COMMANDS="$COMMANDS|migrate"
 
 function redo {
     rollback && migrate
 }
+COMMANDS="$COMMANDS|redo"
 
 function seed {
     echo "loading seed data..."
     coffee ./src/db/seed.coffee
 }
+COMMANDS="$COMMANDS|seed"
 
 function usage {
     echo "$USAGE"; echo
     [[ "$1" != "" ]] && echo "ERROR: $*" && echo
     exit 1
+}
+COMMANDS="$COMMANDS|usage"
+
+# Helper Functions #####################################################################################################
+
+function set-app {
+    if [[ "$ENV" == "staging" ]]; then
+        APP="crafting-guide-staging"
+    elif [[ "$ENV" == "prod" ]]; then
+        APP="crafting-guide-production"
+    fi
+}
+
+function set-database-url {
+    if [[ "$ENV" == "local" ]]; then
+        export DATABASE_URL="postgres:///crafting_guide"
+    elif [[ "$ENV" == "staging" ]]; then
+        export DATABASE_URL=$(./scripts/heroku dburl)
+        export PGSSLMODE="require"
+    elif [[ "$ENV" == "prod" ]]; then
+        export DATABASE_URL=$(./scripts/heroku dburl --prod)
+        export PGSSLMODE="require"
+    else
+        usage "Unknown environment: $ENV"
+    fi
 }
 
 ########################################################################################################################
@@ -94,7 +152,7 @@ shift
 
 [[ "$COMMAND" == "" ]] && usage
 
-if ! echo "$COMMAND" | egrep -q "console|create-migration|create-test-db|migrate|nuke|redo|rollback|seed"; then
+if ! echo "$COMMAND" | egrep -q "$COMMANDS"; then
     usage "Unknown command: $COMMAND"
 fi
 
@@ -114,16 +172,8 @@ while [[ "$1" != "" ]]; do
     shift
 done
 
-if [[ "$ENV" == "local" ]]; then
-    export DATABASE_URL="postgres:///crafting_guide"
-elif [[ "$ENV" == "staging" ]]; then
-    echo "Staging is not currently supported"
-elif [[ "$ENV" == "prod" ]]; then
-    echo "Prod is not currently supported"
-else
-    usage "Unknown environment: $ENV"
-fi
-
+set-app
+set-database-url
 OPTIONS="$DRY_RUN $VERBOSE --migrations-dir $MIGRATIONS_DIR --coffee-file"
 
 $COMMAND
