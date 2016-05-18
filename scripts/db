@@ -73,10 +73,12 @@ function rollback {
 COMMANDS="$COMMANDS|rollback"
 
 function nuke {
-    read -p "Really destroy the database in $ENV? Type \"$ENV\" to continue: " RESPONSE
-    if [[ "$RESPONSE" != "$ENV" ]]; then
-        echo "Aborting!"
-        exit 0
+    if [[ "$CONFIRM" != "$ENV" ]]; then
+        read -p "Really destroy the database in $ENV? Type \"$ENV\" to continue: " RESPONSE
+        if [[ "$RESPONSE" != "$ENV" ]]; then
+            echo "Aborting!"
+            exit 0
+        fi
     fi
 
     if [[ "$ENV" == "local" ]]; then
@@ -161,6 +163,7 @@ if ! echo "$COMMAND" | egrep -q "$COMMANDS"; then
     usage "Unknown command: $COMMAND"
 fi
 
+CONFIRM=""
 DRY_RUN=""
 ENV="local"
 NAME=""
@@ -168,6 +171,7 @@ VERBOSE=""
 
 while [[ "$1" != "" ]]; do
     case "$1" in
+        "--confirm") shift; CONFIRM="$1";;
         "--dry-run") DRY_RUN="--dry-run";;
         "--name")    shift; NAME="$1";;
         "--staging") ENV="staging";;
