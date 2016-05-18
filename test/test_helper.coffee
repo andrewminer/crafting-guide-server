@@ -24,6 +24,8 @@ global.should = chai.should()
 global.util   = require 'util'
 global.w      = require 'when'
 
+global.Promise = w.Promise
+
 _.mixin require('crafting-guide-common').stringMixins
 
 # Mocha Test Helpers ###################################################################################################

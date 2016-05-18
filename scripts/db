@@ -59,7 +59,7 @@ function create-migration {
 COMMANDS="$COMMANDS|create-migration"
 
 function create-test-db {
-    pg_dump $DATABASE_NAME -s > .tmp.schema.sql
+    pg_dump $DATABASE_NAME -s > .tmp.schema.sql || die "Could not connect to database: $DATABASE_NAME"
     psql -c "drop database if exists ${DATABASE_NAME}_test;" >/dev/null
     psql -c "create database ${DATABASE_NAME}_test;" >/dev/null
     psql "${DATABASE_NAME}_test" < .tmp.schema.sql >/dev/null
@@ -122,6 +122,11 @@ function usage {
 COMMANDS="$COMMANDS|usage"
 
 # Helper Functions #####################################################################################################
+
+function die {
+    [[ "$1" != "" ]] && echo "$*"
+    exit 1
+}
 
 function set-app {
     if [[ "$ENV" == "staging" ]]; then
