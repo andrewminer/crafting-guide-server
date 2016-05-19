@@ -1,5 +1,5 @@
 dependencies:
-    pre:
+    post:
       - ./scripts/db nuke --confirm local
 deployment:
   staging:
