@@ -8,8 +8,10 @@
 {Logger}      = require 'crafting-guide-common'
 global.logger = new Logger level:Logger.WARNING
 
+w = require 'when'
+global.Promise = w.Promise
+
 store = require '../store'
-w     = require 'when'
 
 dataLoaded = []
 
