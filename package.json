@@ -5,7 +5,6 @@
   "main": "./dist/index.js",
   "scripts": {
     "start": "./scripts/start",
-    "postinstall": "",
     "test": "grunt test"
   },
   "repository": {

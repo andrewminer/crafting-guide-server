@@ -50,6 +50,9 @@ module.exports = (grunt)->
     grunt.registerTask 'deploy:staging', 'deploy the project to staging via CircleCI',
         ['script:deploy:staging']
 
+    grunt.registerTask 'heroku:production', 'noop to keep CircleCI happy',
+        []
+
     grunt.registerTask 'start', 'starts the local server',
         ['script:start']
 
