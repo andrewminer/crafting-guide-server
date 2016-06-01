@@ -23,6 +23,15 @@ CraftingGuideServer = require './crafting_guide_server'
 server = new CraftingGuideServer process.env.PORT, process.env.NODE_ENV
 
 for signal in ['SIGINT', 'SIGTERM']
-    process.on signal, -> server.stop().then -> process.exit 0
+    process.on signal, ->
+        server.stop()
+            .timeout 10000
+            .catch (error)->
+                logger.error "failed to shut down cleanly: #{error.stack}"
+            .then ->
+                process.exit 0
 
 server.start()
+    .catch (e)->
+        logger.error -> "failed to start server: #{e}"
+        process.exit -1

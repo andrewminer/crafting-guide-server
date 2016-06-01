@@ -30,21 +30,32 @@ module.exports = class CraftingGuideServer
         middleware.addPrefixes @expressApp
         @expressApp.use '/', require './routers/root'
         @expressApp.use '/github', require './routers/github'
-        @expressApp.use '/modBallot', require './routers/mod_ballots'
+        @expressApp.use '/modBallot', require './routers/mod_ballot'
+        @expressApp.use '/modVotes', require './routers/mod_votes'
         @expressApp.use '/users', require './routers/users'
         middleware.addSuffixes @expressApp
 
         @httpServer = http.createServer @expressApp
 
     start: ->
-        deferred = w.defer()
-        @httpServer.once 'error', (e)-> deferred.reject e
-        @httpServer.listen @port, =>
-            logger.warning "Crafting Guide Server is listening on port #{@port} in the #{@env} environment"
-            deferred.resolve this
-        return deferred.promise
+        w.promise (resolve, reject)=>
+            @httpServer.once 'error', (e)->
+                logger.error -> "Crafting Guide Server failed to start: #{e}"
+                reject e
+
+            @httpServer.listen @port, (error)=>
+                if error?
+                    reject error
+                    return
+
+                logger.warning => "Crafting Guide Server is listening on port #{@port} in the #{@env} environment"
+                @httpServer.on 'error', (e)->
+                    logger.error -> "Crafting Guide Server encountered an error: #{e}"
+
+                resolve this
 
     stop: ->
         w.promise (resolve, reject)=>
-            logger.warning "Crafting Guide Server is shutting down" unless @expressApp.env is 'test'
-            @httpServer.close -> resolve this
+            logger.warning => "Crafting Guide Server is shutting down" unless @expressApp.env is 'test'
+            @httpServer.once 'error', -> reject error
+            @httpServer.close => resolve this

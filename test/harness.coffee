@@ -6,8 +6,9 @@
 #
 
 CraftingGuideServer   = require '../src/crafting_guide_server'
+middleware            = require '../src/middleware'
+store                 = require '../src/store'
 {CraftingGuideClient} = require 'crafting-guide-common'
-store                 = '../src/store'
 
 ########################################################################################################################
 
@@ -37,3 +38,9 @@ module.exports = class Harness
 
     beforeEach: ->
         @client = new CraftingGuideClient baseUrl:BASE_URL
+        @db = store.getAdapter('sql').query
+
+    login: (options={})->
+        options.userId ?= _.uniqueId('user-')
+        options.gitHubAccessToken ?= _.uniqueId('github-access-token-')
+        middleware.injectTestUser options

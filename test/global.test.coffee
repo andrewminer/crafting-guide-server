@@ -10,7 +10,12 @@ store = require '../src/store'
 ########################################################################################################################
 
 beforeEach ->
-    promises = []
+    db = store.getAdapter('sql')?.query
+    return unless db
+
+    tables = []
     for name, Resource of store.definitions
-        promises.push Resource.destroyAll()
-    w.all promises
+        continue unless Resource.table?
+        tables.push "\"#{Resource.table}\""
+
+    db.raw "truncate #{tables.join(', ')} cascade"

@@ -5,9 +5,10 @@
 # All rights reserved.
 #
 
-express = require 'express'
-store   = require '../store'
-_       = require '../underscore'
+express         = require 'express'
+ModBallotLoader = require '../models/mod_ballot_loader'
+store           = require '../store'
+_               = require '../underscore'
 
 ########################################################################################################################
 
@@ -16,11 +17,8 @@ module.exports = router = express.Router()
 # Public Routers ###################################################################################
 
 router.get '/', (request, response)->
-    ModSuggestion.findAll()
-        .then (suggestions)->
-            response.api data:(s.toHash() for s in suggestions)
-
-router.post '/', (request, response)->
-    attributes = _.pick request.body, ModSuggestion.fields
-
-    ModSuggestion.create attributes
+    response.api ->
+        loader = new ModBallotLoader store.getAdapter('sql').query
+        loader.load()
+            .then (ballot)->
+                ballot.toHash()

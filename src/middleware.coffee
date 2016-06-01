@@ -19,6 +19,8 @@ User = store.definitions.User
 
 global.logger ?= new Logger
 
+TEST_USER = null
+
 ########################################################################################################################
 
 exports.addPrefixes = (app)->
@@ -42,8 +44,11 @@ exports.addPrefixes = (app)->
 
 exports.addSuffixes = (app)->
     app.get '*', (request, response)->
-        request.api -> status.notFound.throw "unknown API endpoint: #{request.path}"
+        response.api -> status.notFound.throw "unknown API endpoint: #{request.path}"
     app.use reportError
+
+exports.injectTestUser = (testUser)->
+    TEST_USER = testUser
 
 addApiResponseMethod = (request, response, next)->
     response.api = ((req, res)-> return (v)->
@@ -63,11 +68,16 @@ addApiResponseMethod = (request, response, next)->
 
 approveOrigin = (request, response, next)->
     origin = request.headers.origin
-    if origin? and origin.match /^http:\/\/([a-z]{1,7}\.)?crafting-guide\.com(:[0-9]{1,4})?/
-        response.set 'Access-Control-Allow-Origin', origin
-        response.set 'Access-Control-Allow-Credentials', 'true'
-        response.set 'Access-Control-Allow-Methods', request.headers['access-control-request-method']
-        response.set 'Access-Control-Allow-Headers', request.headers['access-control-request-headers']
+
+    if origin?
+        match = origin.match /^http:\/\/localhost(:[0-9]{1,4})?/
+        match ?= origin.match /^http:\/\/([a-z]{1,7}\.)?crafting-guide\.com(:[0-9]{1,4})?/
+
+        if match?
+            response.set 'Access-Control-Allow-Origin', origin
+            response.set 'Access-Control-Allow-Credentials', 'true'
+            response.set 'Access-Control-Allow-Methods', request.headers['access-control-request-method']
+            response.set 'Access-Control-Allow-Headers', request.headers['access-control-request-headers']
 
     if request.method is 'OPTIONS'
         response.end()
@@ -112,7 +122,11 @@ reportError = (error, request, response, next)->
 unpackCurrentUser = (request, response, next)->
     request.gitHubClient = new GitHubClient
 
-    if request.session?.userId?
+    if TEST_USER?
+        request.user = TEST_USER
+        request.gitHubClient.accessToken = TEST_USER.gitHubAccessToken
+        next()
+    else if request.session?.userId?
         User.find request.session.userId
             .then (user)->
                 if user?
@@ -148,15 +162,17 @@ writeErrorResponse = (error, request, response)->
 
     if statusCode is status.unauthorized
         if request.user?
-            user.gitHubAccessToken = null
-            User.save user
+            request.user.gitHubAccessToken = null
+            User.save request.user
                 .catch (error)-> logger.error -> "Could not clear user access token: #{error.stack}"
         if request.session?
             request.session.userId = null
 
     result = {status:'error', message:error.message}
     result.data = error.data if error.data?
-    result.stack = error.stack if request.app.env in ['test' or 'local']
+
+    if statusCode is status.internalServerError
+        result.stack = error.stack if request.app.env in ['test' or 'local']
 
     writeResponse request, response, statusCode, result
 
