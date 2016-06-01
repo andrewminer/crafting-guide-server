@@ -24,7 +24,7 @@ modVotes = [
     {
         name: 'Atomic Science'
         url: 'http://www.minecraftforum.net/forums/mapping-and-modding/minecraft-mods/1285665-1-6-4-atomic-science-nuclear-power-and-antimatter'
-        voteCount: 1
+        voteCount: 2
     }, {
         name: 'Decocraft'
         url: 'http://www.minecraftforum.net/forums/mapping-and-modding/minecraft-mods/1292016-decocraft-2-2-decorations-for-minecraft-halloween'
@@ -85,10 +85,6 @@ modVotes = [
         name: 'Advent of Ascension'
         url: 'http://www.minecraftforum.net/forums/mapping-and-modding/minecraft-mods/1286381-aoa-21-new-dimensions-330-mobs-27-bosses-skills'
         voteCount: 1
-    }, {
-        name: 'QuantumFlux'
-        url: 'http://www.minecraftforum.net/forums/mapping-and-modding/minecraft-mods/2379902-quantumflux-wireless-rf-1-3-3'
-        voteCount: 2
     }, {
         name: 'Gany\'s Nether'
         url: 'http://www.curse.com/mc-mods/minecraft/222302-ganys-nether'
@@ -158,8 +154,8 @@ modVotes = [
         url: 'http://pixelmonmod.com/wiki/index.php?title=Main_Page'
         voteCount: 1
     }, {
-        name: 'Better Dungeons'
-        url: 'http://mods.curse.com/mc-mods/minecraft/better-dungeons'
+        name: 'Chocolate Quest'
+        url: 'http://www.minecraftforum.net/forums/mapping-and-modding/minecraft-mods/1278075-chocolate-quest-mods-for-the-adventurers'
         voteCount: 1
     }, {
         name: 'Better Than Wolves'
@@ -172,14 +168,6 @@ modVotes = [
     }, {
         name: 'Eccentric Biomes'
         url: 'http://www.minecraftforum.net/forums/mapping-and-modding/minecraft-mods/2562287-eccentric-biomes-mod'
-        voteCount: 1
-    }, {
-        name: 'Agrarian Skies'
-        url: 'http://api.technicpack.net/modpack/htm-agrarian-skies-modpack'
-        voteCount: 1
-    }, {
-        name: 'Atomic Science'
-        url: 'http://www.minecraftforum.net/forums/mapping-and-modding/minecraft-mods/1285665-1-6-4-atomic-science-nuclear-power-and-antimatter'
         voteCount: 1
     }
 ]
