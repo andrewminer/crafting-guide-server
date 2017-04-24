@@ -10,3 +10,6 @@ deployment:
     branch: production
     heroku:
       appname: crafting-guide-production
+machine:
+    node:
+        version: 6.10.2
