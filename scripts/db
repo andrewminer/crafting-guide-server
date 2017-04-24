@@ -10,6 +10,11 @@ if ! which psql >/dev/null; then
     exit 1
 fi
 
+if ! which coffee >/dev/null; then
+    echo "WARNING: coffee not found! Installing now..."
+    npm install -g coffee
+fi
+
 if ! which db-migrate >/dev/null; then
     echo "WARNING: db-migrate not found! Installing now..."
     npm install -g db-migrate@0.10.0-beta.12
