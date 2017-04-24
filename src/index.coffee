@@ -1,28 +1,25 @@
 #
-# Crafting Guide - index.coffee
+# Crafting Guide Server - index.coffee
 #
-# Copyright © 2014-2016 by Redwood Labs
+# Copyright © 2014-2017 by Redwood Labs
 # All rights reserved.
 #
 
-require('dotenv').config()
+require("dotenv").config()
 
-{Logger}      = require 'crafting-guide-common'
+{Logger} = require("crafting-guide-common").util
+
 global.logger = new Logger level:Logger.VERBOSE
-
-global._ = require 'underscore'
-_.mixin require('crafting-guide-common').stringMixins
-
-global.util = require 'util'
-
-global.w    = require 'when'
+global._      = require("crafting-guide-common")._
+global.util   = require "util"
+global.w      = require "when"
 
 ########################################################################################################################
 
-CraftingGuideServer = require './crafting_guide_server'
+CraftingGuideServer = require "./crafting_guide_server"
 server = new CraftingGuideServer process.env.PORT, process.env.NODE_ENV
 
-for signal in ['SIGINT', 'SIGTERM']
+for signal in ["SIGINT", "SIGTERM"]
     process.on signal, ->
         server.stop()
             .timeout 10000

@@ -1,14 +1,14 @@
 #
-# Crafting Guide - harness.coffee
+# Crafting Guide Server - harness.coffee
 #
-# Copyright © 2014-2016 by Redwood Labs
+# Copyright © 2014-2017 by Redwood Labs
 # All rights reserved.
 #
 
-CraftingGuideServer   = require '../src/crafting_guide_server'
-middleware            = require '../src/middleware'
-store                 = require '../src/store'
-{CraftingGuideClient} = require 'crafting-guide-common'
+CraftingGuideServer   = require "../src/crafting_guide_server"
+middleware            = require "../src/middleware"
+store                 = require "../src/store"
+{CraftingGuideClient} = require("crafting-guide-common").api
 
 ########################################################################################################################
 
@@ -29,7 +29,7 @@ module.exports = class Harness
 
     before: ->
         if not _serverStarting?
-            _server = new CraftingGuideServer PORT, 'test'
+            _server = new CraftingGuideServer PORT, "test"
             _serverStarting = _server.start()
 
         @server = _server
@@ -38,9 +38,9 @@ module.exports = class Harness
 
     beforeEach: ->
         @client = new CraftingGuideClient baseUrl:BASE_URL
-        @db = store.getAdapter('sql').query
+        @db = store.getAdapter("sql").query
 
     login: (options={})->
-        options.userId ?= _.uniqueId('user-')
-        options.gitHubAccessToken ?= _.uniqueId('github-access-token-')
+        options.userId ?= _.uniqueId("user-")
+        options.gitHubAccessToken ?= _.uniqueId("github-access-token-")
         middleware.injectTestUser options

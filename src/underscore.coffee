@@ -1,8 +1,8 @@
 #
-# Crafting Guide - underscore.coffee
+# Crafting Guide Server - underscore.coffee
 #
-# Copyright © 2014-2016 by Redwood Labs
+# Copyright © 2014-2017 by Redwood Labs
 # All rights reserved.
 #
 
-module.exports = _ = require 'underscore'
+module.exports = _ = require("crafting-guide-common")._

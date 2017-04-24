@@ -1,12 +1,12 @@
 #
-# Crafting Guide - 20160514155354-create-touch-function.coffee
+# Crafting Guide Server - 20160514155354-create-touch-function.coffee
 #
-# Copyright © 2014-2016 by Redwood Labs
+# Copyright © 2014-2017 by Redwood Labs
 # All rights reserved.
 #
 
-tools = require '../migration_tools'
-w     = require 'when'
+tools = require "../migration_tools"
+w     = require "when"
 
 ########################################################################################################################
 

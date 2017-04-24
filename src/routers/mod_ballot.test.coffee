@@ -1,13 +1,12 @@
 #
-# Crafting Guide - mod_ballots.test.coffee
+# Crafting Guide Server - mod_ballots.test.coffee
 #
-# Copyright © 2014-2016 by Redwood Labs
+# Copyright © 2014-2017 by Redwood Labs
 # All rights reserved.
 #
 
-Harness          = require '../../test/harness'
-store            = require '../store'
-{TestHttpServer} = require 'crafting-guide-common'
+Harness          = require "../../test/harness"
+store            = require "../store"
 
 Mod     = store.definitions.Mod
 ModVote = store.definitions.ModVote
@@ -19,20 +18,20 @@ harness = new Harness
 
 ########################################################################################################################
 
-describe 'router: /mod_ballot', ->
+describe "router: /mod_ballot", ->
     @slow 250 # ms
 
     before -> harness.before()
     beforeEach -> harness.beforeEach()
 
-    describe '/ GET', ->
+    describe "/ GET", ->
 
-        it 'returns a populated mod ballot', ->
+        it "returns a populated mod ballot", ->
             w(true)
                 .then =>
                     w.all(
-                        Mod.create id:1, name:'Alpha',   url:'http://alpha.com'
-                        Mod.create id:2, name:'Bravo',   url:'http://bravo.com'
+                        Mod.create id:1, name:"Alpha", url:"http://alpha.com"
+                        Mod.create id:2, name:"Bravo", url:"http://bravo.com"
                         User.create id:1
                         User.create id:2
                     )
@@ -47,4 +46,4 @@ describe 'router: /mod_ballot', ->
                 .then (response)=>
                     ballot = response.json
                     (l.modId for l in ballot.lines).should.eql [2, 1]
-                    (l.name for l in ballot.lines).should.eql ['Bravo', 'Alpha']
+                    (l.name for l in ballot.lines).should.eql ["Bravo", "Alpha"]

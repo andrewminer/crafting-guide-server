@@ -1,20 +1,19 @@
 #
-# Crafting Guide - github_client.coffee
+# Crafting Guide Server - github_client.coffee
 #
-# Copyright © 2014-2016 by Redwood Labs
+# Copyright © 2014-2017 by Redwood Labs
 # All rights reserved.
 #
 
-HttpStatus = require '../http_status'
-{http}     = require 'crafting-guide-common'
-{Repo}     = require '../constants'
+HttpStatus = require "../http_status"
+{http}     = require("crafting-guide-common").api
 
 ########################################################################################################################
 
 module.exports = class GitHubClient
 
-    @API_BASE_URL: 'https://api.github.com'
-    @BASE_URL:     'https://github.com'
+    @API_BASE_URL: "https://api.github.com"
+    @BASE_URL:     "https://github.com"
 
     constructor: (options={})->
         options.accessToken  ?= null
@@ -26,11 +25,11 @@ module.exports = class GitHubClient
         options.timeout      ?= 60000
 
         _.extend this, _.pick options,
-            'accessToken', 'adminToken', 'apiBaseUrl', 'baseUrl', 'clientId', 'clientSecret', 'timeout'
+            "accessToken", "adminToken", "apiBaseUrl", "baseUrl", "clientId", "clientSecret", "timeout"
 
         @_headers =
-            'Accept':     'application/json'
-            'User-Agent': 'Crafting Guide Server'
+            "Accept":     "application/json"
+            "User-Agent": "Crafting Guide Server"
 
         if not @clientId? then throw new Error "A GitHub Client ID must be provided"
         if not @clientSecret? then throw new Error "A GitHub Client Secret must be provided"
@@ -54,7 +53,7 @@ module.exports = class GitHubClient
     addCollaborator: (owner, repo, login)->
         @_requireAdmin()
 
-        headers = _.extend {'Content-Length', 0}, @_headers
+        headers = _.extend {"Content-Length", 0}, @_headers
         promise = http.put "#{@apiBaseUrl}/repos/#{owner}/#{repo}/collaborators/#{login}", headers:@_headers
             .timeout @timeout
             .then (response)=>
@@ -88,7 +87,7 @@ module.exports = class GitHubClient
                     sha: data.sha
             .catch (error)=>
                 if error.statusCode is HttpStatus.notFound
-                    return content:'', sha:null
+                    return content:"", sha:null
                 else
                     throw error
 
@@ -109,7 +108,7 @@ module.exports = class GitHubClient
     # GitHub Login Calls ###########################################################################
 
     completeLogin: (code)->
-        if not code? then return w.reject throw new Error 'code is required'
+        if not code? then return w.reject throw new Error "code is required"
 
         body = client_id:@clientId, client_secret:@clientSecret, code:code
         promise = http.post "#{@baseUrl}/login/oauth/access_token", headers:@_headers, body:body
@@ -132,7 +131,7 @@ module.exports = class GitHubClient
             .timeout @timeout
             .then (response)=>
                 data = @_parseResponse response
-                gitHubUser = _.pick data, 'id', 'avatar_url', 'email', 'login', 'name'
+                gitHubUser = _.pick data, "id", "avatar_url", "email", "login", "name"
                 return gitHubUser
 
         return @_handleErrors promise
@@ -142,7 +141,7 @@ module.exports = class GitHubClient
     _handleErrors: (promise)->
         promise.catch (error)=>
             if error instanceof w.TimeoutError
-                HttpStatus.gatewayTimeout.throw 'GitHub failed to respond'
+                HttpStatus.gatewayTimeout.throw "GitHub failed to respond"
             else
                 HttpStatus.badGateway.throw error.message, {}, error
 
@@ -171,8 +170,8 @@ module.exports = class GitHubClient
 
     _requireAdmin: ->
         if not @adminToken? then throw new Error "admin token required"
-        @_headers['Authorization'] = "token #{@adminToken}"
+        @_headers["Authorization"] = "token #{@adminToken}"
 
     _requireAuthorization: ->
         if not @accessToken? then throw new Error "user must be logged in first"
-        @_headers['Authorization'] = "token #{@accessToken}"
+        @_headers["Authorization"] = "token #{@accessToken}"

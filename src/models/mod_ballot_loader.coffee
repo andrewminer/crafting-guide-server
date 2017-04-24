@@ -1,12 +1,12 @@
 #
-# Crafting Guide - mod_ballot_loader.coffee
+# Crafting Guide Server - mod_ballot_loader.coffee
 #
-# Copyright © 2014-2016 by Redwood Labs
+# Copyright © 2014-2017 by Redwood Labs
 # All rights reserved.
 #
 
-store = require '../store'
-_     = require 'underscore'
+store = require "../store"
+_     = require "../underscore"
 
 ModBallot     = store.definitions.ModBallot
 ModBallotLine = store.definitions.ModBallotLine
@@ -16,7 +16,7 @@ ModBallotLine = store.definitions.ModBallotLine
 module.exports = class ModBallotLoader
 
     constructor: (@db)->
-        if not @db? then throw new Error 'db is required'
+        if not @db? then throw new Error "db is required"
 
     # Class Methods ################################################################################
 

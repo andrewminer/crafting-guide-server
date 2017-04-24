@@ -1,16 +1,16 @@
 #
-# Crafting Guide - github.coffee
+# Crafting Guide Server - github.coffee
 #
-# Copyright © 2014-2016 by Redwood Labs
+# Copyright © 2014-2017 by Redwood Labs
 # All rights reserved.
 #
 
-express        = require 'express'
-GitHubClient   = require '../models/github_client'
-store          = require '../store'
-{http}         = require 'crafting-guide-common'
-{Repo}         = require '../constants'
-{requireLogin} = require '../middleware'
+express        = require "express"
+GitHubClient   = require "../models/github_client"
+store          = require "../store"
+{http}         = require("crafting-guide-common").api
+{Repo}         = require "../constants"
+{requireLogin} = require "../middleware"
 
 User = store.definitions.User
 
@@ -20,7 +20,7 @@ module.exports = router = express.Router()
 
 # Public Routers ###################################################################################
 
-router.post '/session', (request, response)->
+router.post "/session", (request, response)->
     gitHubUser = null
 
     response.api ->
@@ -30,7 +30,8 @@ router.post '/session', (request, response)->
                 client.fetchCurrentUser()
             .then (g)->
                 gitHubUser = g
-                User.findAll gitHubId:gitHubUser.id
+                params = gitHubId:gitHubUser.id
+                User.findAll params
             .then (users)->
                 if users.length > 0
                     user = users[0]
@@ -44,7 +45,7 @@ router.post '/session', (request, response)->
                 request.session.userId = user.id
                 return user
 
-router.delete '/session', (request, response)->
+router.delete "/session", (request, response)->
     response.api ->
         return null unless request.user?
 
@@ -56,7 +57,7 @@ router.delete '/session', (request, response)->
 
 # Private Routes ###################################################################################
 
-router.get '/file/*', requireLogin, (request, response)->
+router.get "/file/*", requireLogin, (request, response)->
     owner = Repo.craftingGuideData.owner
     path  = request.params[0]
     repo  = Repo.craftingGuideData.name
@@ -67,7 +68,7 @@ router.get '/file/*', requireLogin, (request, response)->
                 fileRecord.path = path
                 return data:fileRecord
 
-router.put '/file/*', requireLogin, (request, response)->
+router.put "/file/*", requireLogin, (request, response)->
     content = request.body.content
     message = request.body.message
     owner   = Repo.craftingGuideData.owner

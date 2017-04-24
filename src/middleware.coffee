@@ -1,17 +1,17 @@
 #
-# Crafting Guide - middleware.coffee
+# Crafting Guide Server - middleware.coffee
 #
-# Copyright © 2014-2016 by Redwood Labs
+# Copyright © 2014-2017 by Redwood Labs
 # All rights reserved.
 #
 
-bodyParser            = require 'body-parser'
-clientSession         = require 'client-sessions'
-GitHubClient          = require './models/github_client'
-status                = require './http_status'
-store                 = require './store'
-{CraftingGuideClient} = require 'crafting-guide-common'
-{Logger}              = require 'crafting-guide-common'
+bodyParser            = require "body-parser"
+clientSession         = require "client-sessions"
+{CraftingGuideClient} = require("crafting-guide-common").api
+GitHubClient          = require "./models/github_client"
+{Logger}              = require("crafting-guide-common").util
+status                = require "./http_status"
+store                 = require "./store"
 
 User = store.definitions.User
 
@@ -28,13 +28,13 @@ exports.addPrefixes = (app)->
         approveOrigin
         registerFinalizers
         bodyParser.json
-            limit: '1024kb'
+            limit: "1024kb"
         clientSession
             cookieName: CraftingGuideClient.SESSION_COOKIE
             duration: 1000 * 60 * 60 * 24 * 7 * 2 # 2 weeks in ms
-            secret: 'CKpyGnY2C(]@Z38u'
+            secret: "CKpyGnY2C(]@Z38u"
             cookie:
-                domain: '.crafting-guide.com'
+                domain: ".crafting-guide.com"
                 httpOnly: false
                 secure: false
         unpackCurrentUser
@@ -43,7 +43,7 @@ exports.addPrefixes = (app)->
     ]
 
 exports.addSuffixes = (app)->
-    app.get '*', (request, response)->
+    app.get "*", (request, response)->
         response.api -> status.notFound.throw "unknown API endpoint: #{request.path}"
     app.use reportError
 
@@ -60,7 +60,7 @@ addApiResponseMethod = (request, response, next)->
         result = null
         promise
             .then (r)-> result = r
-            .timeout 60000, new Error 'Timed out while answering request'
+            .timeout 60000, new Error "Timed out while answering request"
             .then -> writeSuccessResponse result, req, res
             .catch (error)-> writeErrorResponse error, req, res
     )(request, response)
@@ -74,12 +74,12 @@ approveOrigin = (request, response, next)->
         match ?= origin.match /^http:\/\/([a-z]{1,7}\.)?crafting-guide\.com(:[0-9]{1,4})?/
 
         if match?
-            response.set 'Access-Control-Allow-Origin', origin
-            response.set 'Access-Control-Allow-Credentials', 'true'
-            response.set 'Access-Control-Allow-Methods', request.headers['access-control-request-method']
-            response.set 'Access-Control-Allow-Headers', request.headers['access-control-request-headers']
+            response.set "Access-Control-Allow-Origin", origin
+            response.set "Access-Control-Allow-Credentials", "true"
+            response.set "Access-Control-Allow-Methods", request.headers["access-control-request-method"]
+            response.set "Access-Control-Allow-Headers", request.headers["access-control-request-headers"]
 
-    if request.method is 'OPTIONS'
+    if request.method is "OPTIONS"
         response.end()
     else
         next()
@@ -102,9 +102,9 @@ logRequest = (request, response, next)->
             duration = Date.now() - start
             resultLine = "Responded: #{response.statusCode} after #{duration}ms"
             if response.result?
-                length = response.result.length; unit = 'B'
-                if length > 1024 then length /= 1024; unit = 'kB'
-                if length > 1024 then length /= 1024; unit = 'MB'
+                length = response.result.length; unit = "B"
+                if length > 1024 then length /= 1024; unit = "kB"
+                if length > 1024 then length /= 1024; unit = "MB"
                 resultLine += " with #{length}#{unit} of data"
             return resultLine
 
@@ -140,7 +140,7 @@ unpackCurrentUser = (request, response, next)->
 
 exports.requireLogin = (request, response, next)->
     if not request.user?.gitHubAccessToken?
-        writeErrorResponse { statusCode:status.unauthorized, message:'Not logged in' }, request, response
+        writeErrorResponse { statusCode:status.unauthorized, message:"Not logged in" }, request, response
     else
         next()
 
@@ -168,11 +168,11 @@ writeErrorResponse = (error, request, response)->
         if request.session?
             request.session.userId = null
 
-    result = {status:'error', message:error.message}
+    result = {status:"error", message:error.message}
     result.data = error.data if error.data?
 
     if statusCode is status.internalServerError
-        result.stack = error.stack if request.app.env in ['test' or 'local']
+        result.stack = error.stack if request.app.env in ["test" or "local"]
 
     writeResponse request, response, statusCode, result
 
@@ -182,7 +182,7 @@ writeResponse = (request, response, statusCode, result)->
     runFinalizers request, response
 
 writeSuccessResponse = (result, request, response)->
-    if result is null then result = { message:'ok' }
+    if result is null then result = { message:"ok" }
     if _.isString result then result = { message:result }
 
     writeResponse request, response, status.ok, result

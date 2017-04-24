@@ -25,6 +25,7 @@ COMMANDS:
     create-test-db              clone the database (without data) and make a
                                     test database with the same schema
     nuke                        erase the database and start over from scratch
+    script                      execute a coffee script. Requires --script
     seed                        populate seed data from ./src/db/seed.coffee
 
     create-migration            create a new migration. Requires --name
@@ -35,6 +36,7 @@ COMMANDS:
 OPTIONS:
 
     --name <migration name>     the name of the migration to create
+    --script <path to script>   the script to execute
     --staging                   use the staging environment instead of local
     --prod                      use the prod environment instead of local
 END
@@ -111,6 +113,17 @@ function redo {
 }
 COMMANDS="$COMMANDS|redo"
 
+function script {
+    if [[ ! -e "$SCRIPT" ]]; then
+        echo "Could not find script file: $SCRIPT"
+        exit 1
+    fi
+
+    echo "executing $SCRIPT..."
+    coffee "$SCRIPT" "$@"
+}
+COMMANDS="$COMMANDS|script"
+
 function seed {
     echo "loading seed data..."
     coffee ./src/db/seed.coffee
@@ -168,6 +181,7 @@ CONFIRM=""
 DRY_RUN=""
 ENV="local"
 NAME=""
+SCRIPT=""
 VERBOSE=""
 
 while [[ "$1" != "" ]]; do
@@ -175,6 +189,7 @@ while [[ "$1" != "" ]]; do
         "--confirm") shift; CONFIRM="$1";;
         "--dry-run") DRY_RUN="--dry-run";;
         "--name")    shift; NAME="$1";;
+        "--script")  shift; SCRIPT="$1"; shift; break;;
         "--staging") ENV="staging";;
         "--prod")    ENV="prod";;
         "--verbose") VERBOSE="--verbose";;
@@ -186,4 +201,4 @@ set-app
 set-database-url
 OPTIONS="$DRY_RUN $VERBOSE --migrations-dir $MIGRATIONS_DIR --coffee-file"
 
-$COMMAND
+$COMMAND "$@"

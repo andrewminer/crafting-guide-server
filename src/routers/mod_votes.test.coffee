@@ -1,13 +1,13 @@
 #
-# Crafting Guide - mod_votes.test.coffee
+# Crafting Guide Server - mod_votes.test.coffee
 #
-# Copyright © 2014-2016 by Redwood Labs
+# Copyright © 2014-2017 by Redwood Labs
 # All rights reserved.
 #
 
-Harness          = require '../../test/harness'
-store            = require '../store'
-{TestHttpServer} = require 'crafting-guide-common'
+Harness          = require "../../test/harness"
+store            = require "../store"
+{TestHttpServer} = require("crafting-guide-common").api
 
 Mod     = store.definitions.Mod
 ModVote = store.definitions.ModVote
@@ -24,8 +24,8 @@ removeTimestamps = (obj)->
 
 createPrimaryData = ->
     w.all(
-        Mod.create id:1, name:'Alpha', url:'http://alpha.com'
-        Mod.create id:2, name:'Bravo', url:'http://bravo.com'
+        Mod.create id:1, name:"Alpha", url:"http://alpha.com"
+        Mod.create id:2, name:"Bravo", url:"http://bravo.com"
         User.create id:1
         User.create id:2
     )
@@ -41,15 +41,15 @@ createModVotes = ->
 
 ########################################################################################################################
 
-describe 'router: /modVotes', ->
+describe "router: /modVotes", ->
     @slow 250 # ms
 
     before -> harness.before()
     beforeEach -> harness.beforeEach()
 
-    describe '/ GET', ->
+    describe "/ GET", ->
 
-        it 'returns all votes for the current user', ->
+        it "returns all votes for the current user", ->
             createModVotes()
                 .then =>
                     harness.login id:1
@@ -58,9 +58,9 @@ describe 'router: /modVotes', ->
                     votes = response.json
                     (v.modId for v in votes).should.eql [1, 2]
 
-    describe '/ POST', ->
+    describe "/ POST", ->
 
-        it 'creates a new mod vote', ->
+        it "creates a new mod vote", ->
             createPrimaryData()
                 .then =>
                     harness.login id:2
@@ -74,7 +74,7 @@ describe 'router: /modVotes', ->
                     modVote = removeTimestamps modVote.toHash()
                     modVote.should.eql id:1, modId:1, userId:2
 
-        it 'does not allow duplicate votes', ->
+        it "does not allow duplicate votes", ->
             createModVotes()
                 .then =>
                     harness.login id:1
@@ -85,9 +85,9 @@ describe 'router: /modVotes', ->
                 .then (modVotes)=>
                     (v.id for v in modVotes).should.eql [1]
 
-    describe '/:modVoteId DELETE', ->
+    describe "/:modVoteId DELETE", ->
 
-        it 'removes an existing mod vote', ->
+        it "removes an existing mod vote", ->
             createModVotes()
                 .then =>
                     harness.login id:1
@@ -103,7 +103,7 @@ describe 'router: /modVotes', ->
                 .then (modVotes)=>
                     (v.id for v in modVotes).should.eql [1]
 
-        it 'requires an existing mod vote', ->
+        it "requires an existing mod vote", ->
             w(true)
                 .then =>
                     harness.login id:1
@@ -111,7 +111,7 @@ describe 'router: /modVotes', ->
                 .catch (error)=>
                     error.response.json.message.should.match /modVote not found/
 
-        it 'requires the modVote match the current user', ->
+        it "requires the modVote match the current user", ->
             createModVotes()
                 .then =>
                     harness.login id:2
