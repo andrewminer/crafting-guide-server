@@ -75,7 +75,7 @@ router.put "/file/*", requireLogin, (request, response)->
     path    = request.params[0]
     repo    = Repo.craftingGuideData.name
     sha     = request.body.sha
-    login   = request.user.login
+    login   = request.user.gitHubLogin
 
     response.api ->
         request.gitHubClient.isCollaborator owner, repo, login
