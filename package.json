@@ -19,7 +19,7 @@
     "mods"
   ],
   "engines": {
-    "node": "6.10.x"
+    "node": "8.x"
   },
   "author": "Andrew Miner",
   "license": "ISC",
